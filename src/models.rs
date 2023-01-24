@@ -45,7 +45,6 @@ impl Format {
             Format::Csv => Format::csv(annotations, path),
             Format::Brat => Format::brat(annotations, path),
             Format::Conll => Format::conll(annotations, path),
-            _ => unimplemented!(),
         }
     }
 
@@ -59,8 +58,8 @@ impl Format {
 
     fn spacy(annotations: Vec<Annotation>, path: &str) -> Result<(), std::io::Error> {
         // Save as such [["text", {"entity": [[0, 4, "ORG"], [5, 10, "ORG"]]}]]
-        let mut file = std::fs::File::create(path)?;
-        // Transform annotation to fit this structure [["text", {"entity": [[0, 4, "ORG"], [5, 10, "ORG"]]}], ...]
+        let path = Format::remove_extension_from_path(path);
+        let mut file = std::fs::File::create(&format!("{}.json", path))?;
         let annotations_tranformed: Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)> =
             annotations
                 .into_iter()
@@ -77,7 +76,8 @@ impl Format {
 
     fn jsonl(annotations: Vec<Annotation>, path: &str) -> Result<(), std::io::Error> {
         // Save as such {"text": "text", "label": [[0, 4, "ORG"], [5, 10, "ORG"]]}
-        let mut file = std::fs::File::create(path)?;
+        let path = Format::remove_extension_from_path(path);
+        let mut file = std::fs::File::create(&format!("{}.jsonl", path))?;
         for annotation in annotations {
             let json = serde_json::to_string(&annotation).unwrap();
             file.write_all(json.as_bytes())?;
@@ -88,8 +88,8 @@ impl Format {
 
     fn csv(annotations: Vec<Annotation>, path: &str) -> Result<(), std::io::Error> {
         // Save as such "text", "label"
-        // "text", [[0, 4, "ORG"], [5, 10, "ORG"]]
-        let mut file = std::fs::File::create(path)?;
+        let path = Format::remove_extension_from_path(path);
+        let mut file = std::fs::File::create(&format!("{}.csv", path))?;
         for annotation in annotations {
             let json = serde_json::to_string(&annotation).unwrap();
             file.write_all(json.as_bytes())?;
@@ -100,12 +100,7 @@ impl Format {
 
     fn brat(annotations: Vec<Annotation>, path: &str) -> Result<(), std::io::Error> {
         // Save .ann and .txt files
-        // .ann file
-        // T1	ORG 0 4	Apple
-        // T2	ORG 5 10	Inc
-        // .txt file
-        // Apple Inc
-        // Save as brat format
+        let path = Format::remove_extension_from_path(path);
         let mut file_ann = std::fs::File::create(format!("{}.ann", path))?;
         let mut file_txt = std::fs::File::create(format!("{}.txt", path))?;
         for annotation in annotations {
@@ -126,20 +121,8 @@ impl Format {
 
     fn conll(annotations: Vec<Annotation>, path: &str) -> Result<(), std::io::Error> {
         // for reference: https://simpletransformers.ai/docs/ner-data-formats/
-        // Example:
-        // Text = Harry Potter was a student at Hogwarts
-        // Harry B-PER
-        // Potter I-PER
-        // was O
-        // a O
-        // student B-MISC
-        // at B-PER
-        // Hogwarts I-PER
-        // Use the example above to save the data
-        let mut file = std::fs::File::create(path)?;
-        // Transform text to fit this structure
-        // [["Harry", "B-PER"], ["Potter", "I-PER"], ["was", "O"], ["a", "O"], ["student", "B-MISC"], ["at", "B-PER"], ["Hogwarts", "I-PER"]]
-        // Perform the same operation for each text in annotations
+        let path = Format::remove_extension_from_path(path);
+        let mut file = std::fs::File::create(&format!("{}.txt", path))?;
         let annotations_tranformed: Vec<Vec<(String, String)>> = annotations
             .into_iter()
             .map(|annotation| {

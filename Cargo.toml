@@ -1,6 +1,6 @@
 [package]
-name = "annotation-cli"
-version = "0.1.0"
+name = "quickner"
+version = "0.1.1"
 edition = "2021"
 authors = ["Omar MHAIMDAT"]
 

@@ -12,21 +12,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "annotation-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "csv",
- "env_logger",
- "indicatif",
- "log",
- "rayon",
- "serde",
- "serde_json",
- "toml",
-]
-
-[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -397,6 +382,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "quickner"
+version = "0.1.1"
+dependencies = [
+ "clap",
+ "csv",
+ "env_logger",
+ "indicatif",
+ "log",
+ "rayon",
+ "serde",
+ "serde_json",
+ "toml",
 ]
 
 [[package]]

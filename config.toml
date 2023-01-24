@@ -1,9 +1,19 @@
+# Configuration file for the NER tool
+
+########################################### GENERAL ######################################
+[general]
+# Mode to run the tool, modes are:
+# Annotation from the start
+# Annotation from already annotated texts
+# Load annotations and add new entities
+
+
+############################################# TEXT #######################################
 [texts]
 
 [texts.input]
 path = "texts.csv" # path to the texts file
 filter = false     # if true, only texts in the filter list will be used
-
 
 [texts.filters]
 alphanumeric = false              # if true, only strictly alphanumeric texts will be used
@@ -15,20 +25,22 @@ numbers = false                   # if true, texts with numbers will not be used
 special_characters = false        # if true, texts with special characters will not be used
 accept_special_characters = ".,-" # list of special characters to accept in the text (if special_characters is true)
 
+
+########################################### ANNOTATIONS ##################################
 [annotations]
-format = "spacy" # format of the output file (jsonl, spaCy, brat, standoff)
+format = "conll" # format of the output file (jsonl, spaCy, brat, conll)
 
 [annotations.output]
 path = "annotations.jsonl" # path to the output file
 
+
+########################################### ENTITIES #####################################
 [entities]
 
 [entities.input]
 path = "entities.csv" # path to the entities file
 filter = true         # if true, only entities in the filter list will be used
-
-[entities.excludes]
-# path = "excludes.csv" # path to entities to exclude from the search
+save = true           # if true, the entities found will be saved in the output file
 
 [entities.filters]
 alphanumeric = false             # if true, only strictly alphanumeric entities will be used
@@ -36,6 +48,11 @@ case_sensitive = false           # if true, case sensitive search will be used
 min_length = 0                   # minimum length of the entity
 max_length = 20                  # maximum length of the entity
 punctuation = false              # if true, entities with punctuation will not be used
-numbers = false                  # if true, entities with numbers will not be used
+numbers = true                  # if true, entities with numbers will not be used
 special_characters = true        # if true, entities with special characters will not be used
 accept_special_characters = ".-" # list of special characters to accept in the entity (if special_characters is true)
+
+
+########################################### EXCLUDES #####################################
+[entities.excludes]
+# path = "excludes.csv" # path to entities to exclude from the search

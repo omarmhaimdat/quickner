@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Omar MHAIMDAT"]
 license-file = "LICENSE"
 homepage = "https://github.com/omarmhaimdat/quickner"
-keywords = ["ner", "named entity", "nlp", "cli"]
+keywords = ["ner", "named-entity", "nlp", "cli"]
 description = "A fast and simple NER tool"
 readme = "README.md"
 

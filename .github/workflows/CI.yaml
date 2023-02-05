@@ -7,8 +7,42 @@ on:
   pull_request:
 
 jobs:
-  linux:
+  clippy:
+    name: Clippy
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+      - uses: actions-rs/clippy-check@v1
+        with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            args: --all-features
+  
+  cargo-publish:
+    name: Publish to crates.io
+    runs-on: ubuntu-latest
+    needs: clippy
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+            toolchain: stable
+            override: true
+      - uses: katyo/publish-crates@v2
+        with:
+            path: './quickner-cli'
+            args: --no-verify
+            dry-run: true
+            ignore-unpublished-changes: true
+            registry-token: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+  linux:
+    name: Build wheels on Linux
+    runs-on: ubuntu-latest
+    needs: clippy
     steps:
       - uses: actions/checkout@v2
       - uses: messense/maturin-action@v1
@@ -23,7 +57,9 @@ jobs:
           path: dist
 
   windows:
+    name: Build wheels on Windows
     runs-on: windows-latest
+    needs: clippy
     steps:
       - uses: actions/checkout@v2
       - uses: messense/maturin-action@v1
@@ -37,7 +73,9 @@ jobs:
           path: dist
 
   macos:
+    name: Build wheels on macOS
     runs-on: macos-latest
+    needs: clippy
     steps:
       - uses: actions/checkout@v2
       - uses: messense/maturin-action@v1
@@ -51,7 +89,7 @@ jobs:
           path: dist
 
   release:
-    name: Release
+    name: Release to PyPi
     runs-on: ubuntu-latest
     needs:
       - macos

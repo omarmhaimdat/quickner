@@ -3,8 +3,8 @@ name = "quickner-cli"
 version = "0.0.1-alpha.1"
 edition = "2021"
 authors = ["Omar MHAIMDAT"]
-license = "Mozilla Public License 2.0"
 license-file = "LICENSE"
+homepage = "https://github.com/omarmhaimdat/quickner"
 keywords = [
     "ner",
     "named-entity-recognition",

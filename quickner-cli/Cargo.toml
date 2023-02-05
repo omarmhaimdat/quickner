@@ -13,7 +13,7 @@ documentation = "https://docs.rs/quickner-cli"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "quickner_cli"
+name = "quickner"
 
 [dependencies]
 clap = { version = "4.0.32", features = ["derive"] }

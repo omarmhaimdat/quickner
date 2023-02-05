@@ -1,7 +1,7 @@
-from typing import Optional, List, Tuple, Set
+from typing import Optional, List, Tuple, NewType
 from enum import Enum
 
-LABEL = List[Tuple[int, int, str]]
+Label = NewType("Label", List[Tuple[int, int, str]])
 
 class Text:
     """
@@ -29,10 +29,18 @@ class Annotation:
     Attributes:
         id (int): Id of the annotation.
         text (str): Text of the annotation.
-        label (LABEL): Label of the annotation.
+        label (Label): Label of the annotation.
     """
-    def __init__(self, id: int, text: str, label: LABEL) -> None: ...
+    label: Label
+    id : int
+    text: str
+
+    def __init__(self, id: int, text: str, label: Label) -> None: ...
     def __repr__(self) -> str: ...
+    @staticmethod
+    def from_string(text: str) -> Annotation: ...
+    def annotate(self, text: str, entities: List[Entity]) -> None: ...
+
 
 class Input:
     """

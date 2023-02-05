@@ -1,0 +1,23 @@
+[package]
+name = "quickner"
+version = "0.0.0-alpha.1"
+edition = "2021"
+authors = ["Omar MHAIMDAT"]
+license = "Mozilla Public License 2.0"
+keywords = [
+    "ner",
+    "named-entity-recognition",
+    "nlp",
+    "natural-language-processing",
+]
+description = "A fast and simple NER tool"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "quickner"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.18.0", features = ["extension-module"] }
+quickner-cli = { path = "quickner-cli" }
+serde = { version = "1.0.130", features = ["derive"] }

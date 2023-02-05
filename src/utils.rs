@@ -31,5 +31,5 @@ pub(crate) fn colorize(text: &str, color: TermColor) -> String {
         TermColor::Magenta => 35,
         TermColor::Cyan => 36,
     };
-    format!("\x1b[{}m{}\x1b[0m", color_code, text)
+    format!("\x1b[{color_code}m{text}\x1b[0m")
 }

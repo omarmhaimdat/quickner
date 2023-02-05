@@ -2,6 +2,7 @@ name: Rust Package CI
 
 on:
   push:
+    branches: [master]
   pull_request:
 
 jobs:
@@ -16,11 +17,12 @@ jobs:
       - uses: actions-rs/clippy-check@v1
         with:
             token: ${{ secrets.GITHUB_TOKEN }}
-            path: './quickner-cli'
             args: --all-targets --all-features -- -D warnings
+  
   cargo-publish:
     runs-on: ubuntu-latest
     needs: clippy
+    if: github.ref == 'refs/heads/master'
     steps:
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1

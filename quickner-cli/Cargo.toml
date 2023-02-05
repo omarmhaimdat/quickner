@@ -1,0 +1,29 @@
+[package]
+name = "quickner-cli"
+version = "0.0.1-alpha.1"
+edition = "2021"
+authors = ["Omar MHAIMDAT"]
+license = "Mozilla Public License 2.0"
+keywords = [
+    "ner",
+    "named-entity-recognition",
+    "nlp",
+    "natural-language-processing",
+]
+description = "A fast and simple NER tool"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "quickner_cli"
+
+[dependencies]
+clap = { version = "4.0.32", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4.0"
+indicatif = "0.17.0"
+toml = "0.7.0"
+env_logger = "0.10.0"
+rayon = "1.6"
+csv = "1.1"

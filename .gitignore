@@ -1,10 +1,12 @@
 /target
+/quickner-cli/target
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 .pytest_cache/
 *.py[cod]
 *.py
+*.lock
 
 # C extensions
 *.so

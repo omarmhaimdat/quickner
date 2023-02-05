@@ -8,6 +8,7 @@ on:
 
 jobs:
   clippy:
+    permissions: read-all
     name: Clippy
     runs-on: ubuntu-latest
     steps:

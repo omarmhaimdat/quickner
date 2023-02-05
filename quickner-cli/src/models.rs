@@ -74,7 +74,7 @@ impl Format {
         }
 
         let path = Format::remove_extension_from_path(path);
-        let mut file = std::fs::File::create(format!("{}.json", path))?;
+        let mut file = std::fs::File::create(format!("{path}.json"))?;
         let annotations_tranformed: Vec<(String, SpacyEntity)> = annotations
             .into_iter()
             .map(|annotation| {
@@ -91,7 +91,7 @@ impl Format {
     fn jsonl(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
         // Save as such {"text": "text", "label": [[0, 4, "ORG"], [5, 10, "ORG"]]}
         let path = Format::remove_extension_from_path(path);
-        let mut file = std::fs::File::create(format!("{}.jsonl", path))?;
+        let mut file = std::fs::File::create(format!("{path}.jsonl"))?;
         for annotation in annotations {
             let json = serde_json::to_string(&annotation).unwrap();
             file.write_all(json.as_bytes())?;
@@ -103,7 +103,7 @@ impl Format {
     fn csv(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
         // Save as such "text", "label"
         let path = Format::remove_extension_from_path(path);
-        let mut file = std::fs::File::create(format!("{}.csv", path))?;
+        let mut file = std::fs::File::create(format!("{path}.csv"))?;
         for annotation in annotations {
             let json = serde_json::to_string(&annotation).unwrap();
             file.write_all(json.as_bytes())?;
@@ -115,15 +115,15 @@ impl Format {
     fn brat(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
         // Save .ann and .txt files
         let path = Format::remove_extension_from_path(path);
-        let mut file_ann = std::fs::File::create(format!("{}.ann", path))?;
-        let mut file_txt = std::fs::File::create(format!("{}.txt", path))?;
+        let mut file_ann = std::fs::File::create(format!("{path}.ann"))?;
+        let mut file_txt = std::fs::File::create(format!("{path}.txt"))?;
         for annotation in annotations {
             let text = annotation.text;
             file_txt.write_all(text.as_bytes())?;
             file_txt.write_all(b"\n")?;
             for (id, (start, end, label)) in annotation.label.into_iter().enumerate() {
                 let entity = text[start..end].to_string();
-                let line = format!("T{}\t{}\t{}\t{}\t{}", id, label, start, end, entity);
+                let line = format!("T{id}\t{label}\t{start}\t{end}\t{entity}");
                 file_ann.write_all(line.as_bytes())?;
                 file_ann.write_all(b"\n")?;
             }
@@ -134,7 +134,7 @@ impl Format {
     fn conll(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
         // for reference: https://simpletransformers.ai/docs/ner-data-formats/
         let path = Format::remove_extension_from_path(path);
-        let mut file = std::fs::File::create(format!("{}.txt", path))?;
+        let mut file = std::fs::File::create(format!("{path}.txt"))?;
         let annotations_tranformed: Vec<Vec<(String, String)>> = annotations
             .into_iter()
             .map(|annotation| {
@@ -166,7 +166,7 @@ impl Format {
         // Save the data, one line per word with the word and label separated by a space
         for annotation in annotations_tranformed {
             for (word, label) in annotation {
-                let line = format!("{}\t{}", word, label);
+                let line = format!("{word}\t{label}");
                 file.write_all(line.as_bytes())?;
                 file.write_all(b"\n")?;
             }
@@ -267,7 +267,7 @@ impl Quickner {
     /// Default: ./config.toml
     pub fn new(config_file: Option<&str>) -> Self {
         println!("New instance of Quickner");
-        println!("Configuration file: {:?}", config_file);
+        println!("Configuration file: {config_file:?}");
         let config_file = match config_file {
             Some(config_file) => config_file.to_string(),
             None => "./config.toml".to_string(),

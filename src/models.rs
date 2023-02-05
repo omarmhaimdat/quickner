@@ -209,7 +209,7 @@ impl PyAnnotation {
     pub fn __repr__(&self) -> PyResult<String> {
         let mut repr = format!("Annotation(id={}, text={}, label=[", self.id, self.text);
         for (start, end, label) in &self.label {
-            repr.push_str(&format!("({}, {}, {}), ", start, end, label));
+            repr.push_str(&format!("({start}, {end}, {label}), "));
         }
         repr.push_str("])");
         Ok(repr)
@@ -250,7 +250,7 @@ impl PyAnnotation {
             let color = color_map.get(&label).unwrap();
             pretty.push_str(&self.text[start..start_label]);
             pretty.push_str(&colorize(&self.text[start_label..end_label], *color));
-            pretty.push_str(&format!("[{}]", label));
+            pretty.push_str(&format!("[{label}]"));
             start = end_label;
         }
         pretty.push_str(&self.text[start..]);
@@ -315,6 +315,7 @@ pub struct PyOutput {
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone, Hash, Debug)]
 #[pyclass(name = "Format")]
+#[allow(clippy::upper_case_acronyms)]
 pub enum PyFormat {
     CSV,
     JSONL,
@@ -359,91 +360,89 @@ impl PyQuickner {
     #[pyo3(signature = (config_path = None))]
     pub fn new(config_path: Option<&str>) -> Self {
         let quickner = Quickner::new(config_path);
-        match quickner {
-            quickner => PyQuickner {
-                config: PyConfig {
-                    texts: PyTexts {
-                        input: PyInput {
-                            path: quickner.config.texts.input.path,
-                            filter: quickner.config.texts.input.filter,
-                        },
-                        filters: PyFilters {
-                            alphanumeric: quickner.config.texts.filters.alphanumeric,
-                            case_sensitive: quickner.config.texts.filters.case_sensitive,
-                            min_length: quickner.config.texts.filters.min_length,
-                            max_length: quickner.config.texts.filters.max_length,
-                            punctuation: quickner.config.texts.filters.punctuation,
-                            numbers: quickner.config.texts.filters.numbers,
-                            special_characters: quickner.config.texts.filters.special_characters,
-                            accept_special_characters: quickner
-                                .config
-                                .texts
-                                .filters
-                                .accept_special_characters,
-                            list_of_special_characters: quickner
-                                .config
-                                .texts
-                                .filters
-                                .list_of_special_characters
-                                .map(|list| list.into_iter().collect::<Vec<char>>()),
-                        },
+        PyQuickner {
+            config: PyConfig {
+                texts: PyTexts {
+                    input: PyInput {
+                        path: quickner.config.texts.input.path,
+                        filter: quickner.config.texts.input.filter,
                     },
-                    annotations: PyAnnotationsConfig {
-                        output: PyOutput {
-                            path: quickner.config.annotations.output.path,
-                        },
-                        format: match quickner.config.annotations.format {
-                            quickner_cli::config::Format::Csv => PyFormat::CSV,
-                            quickner_cli::config::Format::Jsonl => PyFormat::JSONL,
-                            quickner_cli::config::Format::Spacy => PyFormat::SPACY,
-                            quickner_cli::config::Format::Brat => PyFormat::BRAT,
-                            quickner_cli::config::Format::Conll => PyFormat::CONLL,
-                        },
-                    },
-                    entities: PyEntities {
-                        input: PyInput {
-                            path: quickner.config.entities.input.path,
-                            filter: quickner.config.entities.input.filter,
-                        },
-                        filters: PyFilters {
-                            alphanumeric: quickner.config.entities.filters.alphanumeric,
-                            case_sensitive: quickner.config.entities.filters.case_sensitive,
-                            min_length: quickner.config.entities.filters.min_length,
-                            max_length: quickner.config.entities.filters.max_length,
-                            punctuation: quickner.config.entities.filters.punctuation,
-                            numbers: quickner.config.entities.filters.numbers,
-                            special_characters: quickner.config.entities.filters.special_characters,
-                            accept_special_characters: quickner
-                                .config
-                                .entities
-                                .filters
-                                .accept_special_characters,
-                            list_of_special_characters: quickner
-                                .config
-                                .entities
-                                .filters
-                                .list_of_special_characters
-                                .map(|list| list.into_iter().collect::<Vec<char>>()),
-                        },
-                        excludes: PyExcludes {
-                            path: quickner.config.entities.excludes.path,
-                        },
-                    },
-                    logging: match quickner.config.logging {
-                        Some(logging) => Some(PyLogging {
-                            level: logging.level,
-                        }),
-                        None => None,
+                    filters: PyFilters {
+                        alphanumeric: quickner.config.texts.filters.alphanumeric,
+                        case_sensitive: quickner.config.texts.filters.case_sensitive,
+                        min_length: quickner.config.texts.filters.min_length,
+                        max_length: quickner.config.texts.filters.max_length,
+                        punctuation: quickner.config.texts.filters.punctuation,
+                        numbers: quickner.config.texts.filters.numbers,
+                        special_characters: quickner.config.texts.filters.special_characters,
+                        accept_special_characters: quickner
+                            .config
+                            .texts
+                            .filters
+                            .accept_special_characters,
+                        list_of_special_characters: quickner
+                            .config
+                            .texts
+                            .filters
+                            .list_of_special_characters
+                            .map(|list| list.into_iter().collect::<Vec<char>>()),
                     },
                 },
-                config_path: match config_path {
-                    Some(config_path) => config_path.to_string(),
-                    None => String::from(""),
+                annotations: PyAnnotationsConfig {
+                    output: PyOutput {
+                        path: quickner.config.annotations.output.path,
+                    },
+                    format: match quickner.config.annotations.format {
+                        quickner_cli::config::Format::Csv => PyFormat::CSV,
+                        quickner_cli::config::Format::Jsonl => PyFormat::JSONL,
+                        quickner_cli::config::Format::Spacy => PyFormat::SPACY,
+                        quickner_cli::config::Format::Brat => PyFormat::BRAT,
+                        quickner_cli::config::Format::Conll => PyFormat::CONLL,
+                    },
                 },
-                annotations: None,
-                texts: None,
-                entities: None,
+                entities: PyEntities {
+                    input: PyInput {
+                        path: quickner.config.entities.input.path,
+                        filter: quickner.config.entities.input.filter,
+                    },
+                    filters: PyFilters {
+                        alphanumeric: quickner.config.entities.filters.alphanumeric,
+                        case_sensitive: quickner.config.entities.filters.case_sensitive,
+                        min_length: quickner.config.entities.filters.min_length,
+                        max_length: quickner.config.entities.filters.max_length,
+                        punctuation: quickner.config.entities.filters.punctuation,
+                        numbers: quickner.config.entities.filters.numbers,
+                        special_characters: quickner.config.entities.filters.special_characters,
+                        accept_special_characters: quickner
+                            .config
+                            .entities
+                            .filters
+                            .accept_special_characters,
+                        list_of_special_characters: quickner
+                            .config
+                            .entities
+                            .filters
+                            .list_of_special_characters
+                            .map(|list| list.into_iter().collect::<Vec<char>>()),
+                    },
+                    excludes: PyExcludes {
+                        path: quickner.config.entities.excludes.path,
+                    },
+                },
+                logging: match quickner.config.logging {
+                    Some(logging) => Some(PyLogging {
+                        level: logging.level,
+                    }),
+                    None => None,
+                },
             },
+            config_path: match config_path {
+                Some(config_path) => config_path.to_string(),
+                None => String::from(""),
+            },
+            annotations: None,
+            texts: None,
+            entities: None,
         }
     }
 

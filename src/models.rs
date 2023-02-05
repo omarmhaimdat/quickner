@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter};
 use pyo3::{exceptions, prelude::*};
 
 use crate::utils::{colorize, TermColor};
-use quickner_cli::models::{Annotation, Annotations, Quickner};
+use quickner::models::{Annotation, Annotations, Entity, Quickner};
 use serde::{Deserialize, Serialize};
 /// Transform Rust code into Python code
 /// Create a Python Class version of the Rust struct
@@ -204,12 +204,43 @@ impl PyAnnotation {
         }
     }
 
+    #[staticmethod]
+    pub fn from_string(text: &str) -> Self {
+        PyAnnotation {
+            id: 0,
+            text: text.to_string(),
+            label: Vec::new(),
+        }
+    }
+
+    pub fn annotate(&mut self, entities: Vec<PyEntity>) {
+        let mut annotation = Annotation::from_string(self.text.clone());
+        let entities = entities
+            .into_iter()
+            .map(|entity| Entity {
+                name: entity.name,
+                label: entity.label,
+            })
+            .collect();
+        annotation.annotate(entities);
+        self.label = annotation
+            .label
+            .into_iter()
+            .map(|label| (label.0, label.1, label.2))
+            .collect();
+    }
+
     // Pretty print the annotation
     // Example: Annotation(id=1, text="Hello World", label=[(0, 5, "Hello"), (6, 11, "World")])
     pub fn __repr__(&self) -> PyResult<String> {
         let mut repr = format!("Annotation(id={}, text={}, label=[", self.id, self.text);
         for (start, end, label) in &self.label {
             repr.push_str(&format!("({start}, {end}, {label}), "));
+        }
+        // Remove the last ", " if there is one
+        if repr.ends_with(", ") {
+            repr.pop();
+            repr.pop();
         }
         repr.push_str("])");
         Ok(repr)
@@ -393,11 +424,11 @@ impl PyQuickner {
                         path: quickner.config.annotations.output.path,
                     },
                     format: match quickner.config.annotations.format {
-                        quickner_cli::config::Format::Csv => PyFormat::CSV,
-                        quickner_cli::config::Format::Jsonl => PyFormat::JSONL,
-                        quickner_cli::config::Format::Spacy => PyFormat::SPACY,
-                        quickner_cli::config::Format::Brat => PyFormat::BRAT,
-                        quickner_cli::config::Format::Conll => PyFormat::CONLL,
+                        quickner::config::Format::Csv => PyFormat::CSV,
+                        quickner::config::Format::Jsonl => PyFormat::JSONL,
+                        quickner::config::Format::Spacy => PyFormat::SPACY,
+                        quickner::config::Format::Brat => PyFormat::BRAT,
+                        quickner::config::Format::Conll => PyFormat::CONLL,
                     },
                 },
                 entities: PyEntities {
@@ -491,11 +522,11 @@ impl PyQuickner {
             None => self.config.annotations.output.path.clone(),
         };
         let format = match format {
-            PyFormat::CSV => quickner_cli::config::Format::Csv,
-            PyFormat::JSONL => quickner_cli::config::Format::Jsonl,
-            PyFormat::SPACY => quickner_cli::config::Format::Spacy,
-            PyFormat::BRAT => quickner_cli::config::Format::Brat,
-            PyFormat::CONLL => quickner_cli::config::Format::Conll,
+            PyFormat::CSV => quickner::config::Format::Csv,
+            PyFormat::JSONL => quickner::config::Format::Jsonl,
+            PyFormat::SPACY => quickner::config::Format::Spacy,
+            PyFormat::BRAT => quickner::config::Format::Brat,
+            PyFormat::CONLL => quickner::config::Format::Conll,
         };
         let annotations: Vec<Annotation> = self
             .annotations

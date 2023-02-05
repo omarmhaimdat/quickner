@@ -13,12 +13,12 @@ use crate::{
 use log::{error, info};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
 use std::{
     collections::{HashMap, HashSet},
     io::Write,
 };
 use std::{env, error::Error};
+use std::{path::Path, time::Instant};
 
 pub struct Quickner {
     /// Path to the configuration file
@@ -43,6 +43,28 @@ pub struct Annotation {
     pub id: u32,
     pub text: String,
     pub label: Vec<(usize, usize, String)>,
+}
+
+impl Annotation {
+    pub fn new(id: u32, text: String, label: Vec<(usize, usize, String)>) -> Self {
+        Annotation { id, text, label }
+    }
+
+    pub fn from_string(text: String) -> Self {
+        Annotation {
+            id: 0,
+            text,
+            label: Vec::new(),
+        }
+    }
+
+    pub fn annotate(&mut self, entities: HashSet<Entity>) {
+        let label = Annotations::find_index(self.text.clone(), entities);
+        match label {
+            Some(label) => self.label = label,
+            None => self.label = Vec::new(),
+        }
+    }
 }
 
 impl Format {
@@ -238,6 +260,7 @@ impl Annotations {
     pub fn annotate(&mut self) {
         let pb = get_progress_bar(self.texts.len() as u64);
         pb.set_message("Annotating texts");
+        let start = Instant::now();
         self.texts
             .par_iter()
             .enumerate()
@@ -257,6 +280,12 @@ impl Annotations {
                 }
             })
             .collect_into_vec(&mut self.annotations);
+        let end = start.elapsed();
+        println!(
+            "Time elapsed in find_index() is: {:?} for {} texts",
+            end,
+            self.texts.len() * self.entities.len()
+        );
         pb.finish();
     }
 }

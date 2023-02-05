@@ -7,7 +7,7 @@
 # Load annotations and add new entities
 
 [logging]
-level = "debug" # level of logging (debug, info, warning, error, fatal)
+level = "info" # level of logging (debug, info, warning, error, fatal)
 
 [texts]
 

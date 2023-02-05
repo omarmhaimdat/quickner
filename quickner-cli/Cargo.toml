@@ -8,6 +8,7 @@ homepage = "https://github.com/omarmhaimdat/quickner"
 keywords = ["ner", "named-entity", "nlp", "cli"]
 description = "A fast and simple NER tool"
 readme = "README.md"
+documentation = "https://docs.rs/quickner-cli"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

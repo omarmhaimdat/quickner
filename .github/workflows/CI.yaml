@@ -16,11 +16,10 @@ jobs:
       - uses: actions-rs/toolchain@v1
         with:
             toolchain: stable
-            override: true
-      - uses: actions-rs/clippy-check@v1
+            components: clippy
+      - uses: actions-rs/clippy@master
         with:
-            token: ${{ secrets.GITHUB_TOKEN }}
-            args: --all-features
+            args: --all-features --all-targets
   
   cargo-publish:
     name: Publish to crates.io

@@ -1,6 +1,5 @@
-use std::fmt::{Display, Formatter};
-
 use pyo3::{exceptions, prelude::*};
+use std::fmt::{Display, Formatter};
 
 use crate::utils::{colorize, TermColor};
 use quickner::models::{Annotation, Annotations, Entity, Quickner};
@@ -475,6 +474,26 @@ impl PyQuickner {
             texts: None,
             entities: None,
         }
+    }
+
+    pub fn __repr__(&self) -> PyResult<String> {
+        let mut repr = String::new();
+        repr.push_str(&colorize("Texts: ", TermColor::Green));
+        repr.push_str(&format!(
+            "{} | ",
+            self.texts.clone().unwrap_or(vec![]).len()
+        ));
+        repr.push_str(&colorize("Entities: ", TermColor::Yellow));
+        repr.push_str(&format!(
+            "{} | ",
+            self.entities.clone().unwrap_or(vec![]).len()
+        ));
+        repr.push_str(&colorize("Annotations: ", TermColor::Green));
+        repr.push_str(&format!(
+            "{}",
+            self.annotations.clone().unwrap_or(vec![]).len()
+        ));
+        Ok(repr)
     }
 
     #[pyo3(signature = (save = false))]

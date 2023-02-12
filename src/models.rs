@@ -212,7 +212,9 @@ impl PyDocument {
         }
     }
 
-    pub fn annotate(&mut self, entities: Vec<PyEntity>) {
+    // Annotate the document with the given entities
+    #[pyo3(signature = (entities, case_sensitive = false))]
+    pub fn annotate(&mut self, entities: Vec<PyEntity>, case_sensitive: bool) {
         let mut annotation = Document::from_string(self.text.clone());
         let entities = entities
             .into_iter()
@@ -221,7 +223,7 @@ impl PyDocument {
                 label: entity.label,
             })
             .collect();
-        annotation.annotate(entities);
+        annotation.annotate(entities, case_sensitive);
         self.label = annotation
             .label
             .into_iter()
@@ -230,9 +232,9 @@ impl PyDocument {
     }
 
     // Pretty print the annotation
-    // Example: Annotation(id=1, text="Hello World", label=[(0, 5, "Hello"), (6, 11, "World")])
+    // Example: Document(id=1, text="Hello World", label=[(0, 5, "Hello"), (6, 11, "World")])
     pub fn __repr__(&self) -> PyResult<String> {
-        let mut repr = format!("Annotation(id={}, text={}, label=[", self.id, self.text);
+        let mut repr = format!("Document(id={}, text={}, label=[", self.id, self.text);
         for (start, end, label) in &self.label {
             repr.push_str(&format!("({start}, {end}, {label}), "));
         }

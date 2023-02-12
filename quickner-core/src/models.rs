@@ -84,7 +84,7 @@ impl Document {
     /// Annotate text given a set of entities
     /// # Examples
     /// ```
-    /// use quickner::models::Annotation;
+    /// use quickner::models::Document;
     /// use quickner::models::Entity;
     /// use std::collections::HashSet;
     ///
@@ -278,7 +278,7 @@ impl Quickner {
         // let mut annotations = Vec::new();
         let annotations = entities.iter().map(|entity| {
             let target_len = entity.name.len();
-            for (start, _) in text.to_lowercase().match_indices(entity.name.as_str()) {
+            for (start, _) in text.match_indices(entity.name.as_str()) {
                 if start == 0
                     || text.chars().nth(start - 1).unwrap().is_whitespace()
                     || text.chars().nth(start - 1).unwrap().is_ascii_punctuation()

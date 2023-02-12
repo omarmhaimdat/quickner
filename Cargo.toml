@@ -1,6 +1,6 @@
 [package]
 name = "quickner"
-version = "0.0.1-alpha.2"
+version = "0.0.1-alpha.3"
 edition = "2021"
 authors = ["Omar MHAIMDAT"]
 license = "Mozilla Public License 2.0"
@@ -19,5 +19,5 @@ crate-type = ["cdylib"]
 
 [dependencies]
 pyo3 = { version = "0.18.0", features = ["extension-module"] }
-quickner-cli = { path = "quickner-cli" }
+quickner-core = { path = "quickner" }
 serde = { version = "1.0.130", features = ["derive"] }

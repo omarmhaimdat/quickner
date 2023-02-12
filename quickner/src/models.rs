@@ -13,18 +13,24 @@ use crate::{
 use log::{error, info};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
+use std::path::Path;
 use std::{
-    collections::{HashMap, HashSet},
-    io::Write,
+    collections::HashSet,
+    fs::File,
+    io::{BufRead, BufReader, Write},
 };
 use std::{env, error::Error};
-use std::{path::Path, time::Instant};
 
+/// Quickner is the main struct of the application
+/// It holds the configuration file and the path to the configuration file
+#[derive(Clone)]
 pub struct Quickner {
     /// Path to the configuration file
     /// Default: ./config.toml
     pub config: Config,
-    pub config_file: Config,
+    pub config_file: String,
+    pub documents: Vec<Document>,
+    pub entities: Vec<Entity>,
 }
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone, Hash, Debug)]
@@ -32,6 +38,10 @@ pub struct Text {
     pub text: String,
 }
 
+/// An entity is a text with a label
+///
+/// This object is used to hold the label used to
+/// annotate the text.
 #[derive(Eq, PartialEq, Hash, Serialize, Deserialize, Clone, Debug)]
 pub struct Entity {
     pub name: String,
@@ -39,27 +49,55 @@ pub struct Entity {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub struct Annotation {
+struct SpacyEntity {
+    entity: Vec<(usize, usize, String)>,
+}
+
+/// An annotation is a text with a set of entities
+///
+/// This object is used to hold the text and the
+/// entities found in the text.
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Document {
     pub id: u32,
     pub text: String,
     pub label: Vec<(usize, usize, String)>,
 }
 
-impl Annotation {
-    pub fn new(id: u32, text: String, label: Vec<(usize, usize, String)>) -> Self {
-        Annotation { id, text, label }
-    }
-
+impl Document {
+    /// Create an annotation from a string
+    /// # Examples
+    /// ```
+    /// use quickner::models::Annotation;
+    ///
+    /// let annotation = Annotation::from_string("Rust is developed by Mozilla".to_string());
+    /// assert_eq!(annotation.text, "Rust is developed by Mozilla");
+    /// ```
     pub fn from_string(text: String) -> Self {
-        Annotation {
+        Document {
             id: 0,
             text,
             label: Vec::new(),
         }
     }
 
-    pub fn annotate(&mut self, entities: HashSet<Entity>) {
-        let label = Annotations::find_index(self.text.clone(), entities);
+    /// Annotate text given a set of entities
+    /// # Examples
+    /// ```
+    /// use quickner::models::Annotation;
+    /// use quickner::models::Entity;
+    /// use std::collections::HashSet;
+    ///
+    /// let mut annotation = Annotation::from_string("Rust is developed by Mozilla".to_string());
+    /// let entities = vec![
+    ///    Entity::new("Rust".to_string(), "Language".to_string()),
+    ///    Entity::new("Mozilla".to_string(), "Organization".to_string()),
+    /// ].into_iter().collect();
+    /// annotation.annotate(entities);
+    /// assert_eq!(annotation.label, vec![(0, 4, "Language".to_string()), (23, 30, "Organization".to_string())]);
+    /// ```
+    pub fn annotate(&mut self, entities: Vec<Entity>) {
+        let label = Quickner::find_index(self.text.clone(), entities);
         match label {
             Some(label) => self.label = label,
             None => self.label = Vec::new(),
@@ -68,7 +106,22 @@ impl Annotation {
 }
 
 impl Format {
-    pub fn save(&self, annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    /// Save annotations to a file in the specified format
+    /// # Examples
+    /// ```
+    /// use quickner::models::Format;
+    /// use quickner::models::Document;
+    ///
+    /// let annotations = vec![Annotation::from_string("Hello World".to_string())];
+    /// let format = Format::Spacy;
+    /// let path = "./test";
+    /// let result = format.save(annotations, path);
+    /// ```
+    /// # Errors
+    /// Returns an error if the file cannot be written
+    /// # Panics
+    /// Panics if the format is not supported
+    pub fn save(&self, annotations: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         match self {
             Format::Spacy => Format::spacy(annotations, path),
             Format::Jsonl => Format::jsonl(annotations, path),
@@ -86,23 +139,22 @@ impl Format {
         path
     }
 
-    fn spacy(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    fn spacy(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such [["text", {"entity": [[0, 4, "ORG"], [5, 10, "ORG"]]}]]
 
         // Transform Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)> into Structure
-        #[derive(Serialize)]
-        struct SpacyEntity {
-            entity: HashMap<String, Vec<(usize, usize, String)>>,
-        }
 
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.json"))?;
-        let annotations_tranformed: Vec<(String, SpacyEntity)> = annotations
+        let annotations_tranformed: Vec<(String, SpacyEntity)> = documents
             .into_iter()
             .map(|annotation| {
-                let mut map = HashMap::new();
-                map.insert("entity".to_string(), annotation.label);
-                (annotation.text, SpacyEntity { entity: map })
+                (
+                    annotation.text,
+                    SpacyEntity {
+                        entity: annotation.label,
+                    },
+                )
             })
             .collect();
         let json = serde_json::to_string(&annotations_tranformed).unwrap();
@@ -110,40 +162,40 @@ impl Format {
         Ok(path)
     }
 
-    fn jsonl(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    fn jsonl(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such {"text": "text", "label": [[0, 4, "ORG"], [5, 10, "ORG"]]}
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.jsonl"))?;
-        for annotation in annotations {
-            let json = serde_json::to_string(&annotation).unwrap();
+        for document in documents {
+            let json = serde_json::to_string(&document).unwrap();
             file.write_all(json.as_bytes())?;
             file.write_all(b"\n")?;
         }
         Ok(path)
     }
 
-    fn csv(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    fn csv(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such "text", "label"
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.csv"))?;
-        for annotation in annotations {
-            let json = serde_json::to_string(&annotation).unwrap();
+        for document in documents {
+            let json = serde_json::to_string(&document).unwrap();
             file.write_all(json.as_bytes())?;
             file.write_all(b"\n")?;
         }
         Ok(path)
     }
 
-    fn brat(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    fn brat(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save .ann and .txt files
         let path = Format::remove_extension_from_path(path);
         let mut file_ann = std::fs::File::create(format!("{path}.ann"))?;
         let mut file_txt = std::fs::File::create(format!("{path}.txt"))?;
-        for annotation in annotations {
-            let text = annotation.text;
+        for document in documents {
+            let text = document.text;
             file_txt.write_all(text.as_bytes())?;
             file_txt.write_all(b"\n")?;
-            for (id, (start, end, label)) in annotation.label.into_iter().enumerate() {
+            for (id, (start, end, label)) in document.label.into_iter().enumerate() {
                 let entity = text[start..end].to_string();
                 let line = format!("T{id}\t{label}\t{start}\t{end}\t{entity}");
                 file_ann.write_all(line.as_bytes())?;
@@ -153,11 +205,11 @@ impl Format {
         Ok(path)
     }
 
-    fn conll(annotations: Vec<Annotation>, path: &str) -> Result<String, std::io::Error> {
+    fn conll(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // for reference: https://simpletransformers.ai/docs/ner-data-formats/
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.txt"))?;
-        let annotations_tranformed: Vec<Vec<(String, String)>> = annotations
+        let annotations_tranformed: Vec<Vec<(String, String)>> = documents
             .into_iter()
             .map(|annotation| {
                 let text = annotation.text;
@@ -198,29 +250,31 @@ impl Format {
     }
 }
 
-impl PartialEq for Annotation {
+impl PartialEq for Document {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id
     }
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Annotations {
-    pub annotations: Vec<Annotation>,
-    pub entities: HashSet<Entity>,
-    pub texts: Vec<Text>,
-}
-
-impl Annotations {
-    pub fn new(entities: HashSet<Entity>, texts: Vec<Text>) -> Self {
-        Annotations {
-            annotations: Vec::new(),
-            entities,
-            texts,
-        }
-    }
-
-    fn find_index(text: String, entities: HashSet<Entity>) -> Option<Vec<(usize, usize, String)>> {
+impl Quickner {
+    /// Find the index of the entities in the text
+    /// # Arguments
+    /// * `text` - The text to search
+    /// * `entities` - The entities to search for
+    /// # Returns
+    /// * `Option<Vec<(usize, usize, String)>>` - The start and end index of the entity and the label
+    /// # Example
+    /// ```
+    /// use std::collections::HashSet;
+    /// use quickner::models::Entity;
+    ///
+    /// let text = "Rust is made by Mozilla".to_string();
+    /// let mut entities = HashSet::new();
+    /// entities.insert(Entity::new("Mozilla".to_string(), "ORG".to_string()));
+    /// let annotations = Annotations::find_index(text, entities);
+    /// assert_eq!(annotations, Some(vec![(15, 22, "ORG".to_string())]));
+    /// ```
+    fn find_index(text: String, entities: Vec<Entity>) -> Option<Vec<(usize, usize, String)>> {
         // let mut annotations = Vec::new();
         let annotations = entities.iter().map(|entity| {
             let target_len = entity.name.len();
@@ -257,35 +311,38 @@ impl Annotations {
         }
     }
 
+    /// Annotate the texts with the entities
+    /// # Example
+    /// ```
+    /// let mut annotations = Annotations::new(entities, texts);
+    /// annotations.annotate();
+    /// ```
+    /// # Panics
+    /// This function will panic if the texts are not loaded
+    /// # Performance
+    /// This function is parallelized using rayon
+    /// # Progress
+    /// This function will show a progress bar
+    /// # Arguments
+    /// * `self` - The annotations
+    /// # Returns
+    /// * `self` - The annotations with the annotations added
+    /// # Errors
+    /// This function will return an error if the texts are not loaded
     pub fn annotate(&mut self) {
-        let pb = get_progress_bar(self.texts.len() as u64);
+        let pb = get_progress_bar(self.documents.len() as u64);
         pb.set_message("Annotating texts");
-        let start = Instant::now();
-        self.texts
-            .par_iter()
-            .enumerate()
-            .map(|(i, text)| {
-                let t = text.text.clone();
-                let index = Annotations::find_index(t, self.entities.clone());
-                let mut index = match index {
-                    Some(index) => index,
-                    None => vec![],
-                };
-                index.sort_by(|a, b| a.0.cmp(&b.0));
-                pb.inc(1);
-                Annotation {
-                    id: (i + 1) as u32,
-                    text: text.text.clone(),
-                    label: index,
-                }
-            })
-            .collect_into_vec(&mut self.annotations);
-        let end = start.elapsed();
-        println!(
-            "Time elapsed in find_index() is: {:?} for {} texts",
-            end,
-            self.texts.len() * self.entities.len()
-        );
+        self.documents.par_iter_mut().for_each(|document| {
+            let t = document.text.clone();
+            let index = Quickner::find_index(t, self.entities.clone());
+            let mut index = match index {
+                Some(index) => index,
+                None => vec![],
+            };
+            index.sort_by(|a, b| a.0.cmp(&b.0));
+            document.label = index;
+            pb.inc(1);
+        });
         pb.finish();
     }
 }
@@ -294,6 +351,19 @@ impl Quickner {
     /// Creates a new instance of Quickner
     /// If no configuration file is provided, the default configuration file is used.
     /// Default: ./config.toml
+    /// # Arguments
+    /// * `config_file` - The path to the configuration file
+    /// # Example
+    /// ```
+    /// use quickner::Quickner;
+    /// let quickner = Quickner::new(Some("./config.toml"));
+    /// ```
+    /// # Panics
+    /// This function will panic if the configuration file does not exist
+    /// # Returns
+    /// * `Self` - The instance of Quickner
+    /// # Errors
+    /// This function will return an error if the configuration file does not exist
     pub fn new(config_file: Option<&str>) -> Self {
         println!("New instance of Quickner");
         println!("Configuration file: {config_file:?}");
@@ -312,7 +382,9 @@ impl Quickner {
         let config = Config::from_file(config_file.as_str());
         Quickner {
             config,
-            config_file: Config::from_file(config_file.as_str()),
+            config_file,
+            documents: vec![],
+            entities: vec![],
         }
     }
 
@@ -343,8 +415,24 @@ impl Quickner {
         config
     }
 
-    /// Returns a list of Annotations
-    pub fn process(&self, save: bool) -> Result<Annotations, Box<dyn Error>> {
+    /// Process the texts and entities, and annotate the texts with the entities.
+    /// This method will return the annotations, and optionally save the annotations to a file.
+    /// # Arguments
+    /// * `self` - The instance of Quickner
+    /// * `save` - Whether to save the annotations to a file
+    /// # Example
+    /// ```
+    /// use quickner::Quickner;
+    /// let quickner = Quickner::new(Some("./config.toml"));
+    /// quickner.process(true);
+    /// ```
+    /// # Returns
+    /// * `Result<Annotations, Box<dyn Error>>` - The annotations
+    /// # Errors
+    /// This function will return an error if the configuration file does not exist
+    /// This function will return an error if the entities file does not exist
+    /// This function will return an error if the texts file does not exist
+    pub fn process(&mut self, save: bool) -> Result<(), Box<dyn Error>> {
         let config = self.parse_config();
         config.summary();
 
@@ -359,7 +447,14 @@ impl Quickner {
             config.texts.filters,
             config.texts.input.filter.unwrap_or(false),
         );
-        let texts: Vec<Text> = texts.into_iter().collect();
+        self.documents = texts
+            .par_iter()
+            .map(|text| Document {
+                id: 0,
+                text: text.text.clone(),
+                label: vec![],
+            })
+            .collect();
         let excludes: HashSet<String> = match config.entities.excludes.path {
             Some(path) => {
                 info!("Reading excludes from {}", path.as_str());
@@ -376,17 +471,16 @@ impl Quickner {
             .filter(|entity| !excludes.contains(&entity.name))
             .cloned()
             .collect();
-        info!("{} entities found", entities.len());
-        info!("{} texts found", texts.len());
-        let mut annotations = Annotations::new(entities, texts);
-        annotations.annotate();
-        info!("{} annotations found", annotations.annotations.len());
+        self.entities = Vec::from_iter(entities);
+        info!("{} entities found", self.entities.len());
+        self.annotate();
+        info!("{} annotations found", self.documents.len());
         // annotations.save(&config.annotations.output.path);
         if save {
-            let save = config.annotations.format.save(
-                annotations.annotations.clone(),
-                &config.annotations.output.path,
-            );
+            let save = config
+                .annotations
+                .format
+                .save(self.documents.clone(), &config.annotations.output.path);
             match save {
                 Ok(_) => info!(
                     "Annotations saved with format {:?}",
@@ -400,7 +494,7 @@ impl Quickner {
         // let annotations_py: Vec<(String, Vec<(usize, usize, String)>)> =
         //     annotations.transform_annotations();
         // Ok(annotations_py)
-        Ok(annotations)
+        Ok(())
     }
 
     fn entities(&self, path: &str, filters: Filters, filter: bool) -> HashSet<Entity> {
@@ -414,9 +508,12 @@ impl Quickner {
                 for result in rdr.deserialize() {
                     let record: Result<Entity, csv::Error> = result;
                     match record {
-                        Ok(entity) => {
+                        Ok(mut entity) => {
                             if filter {
                                 if filters.is_valid(&entity.name) {
+                                    if !filters.case_sensitive {
+                                        entity.name = entity.name.to_lowercase();
+                                    }
                                     entities.insert(entity);
                                 }
                             } else {
@@ -489,6 +586,103 @@ impl Quickner {
                 error!("Unable to parse the excludes file: {}", e);
                 std::process::exit(1);
             }
+        }
+    }
+
+    pub fn from_jsonl(path: &str) -> Quickner {
+        let file = File::open(path);
+        let file = match file {
+            Ok(file) => file,
+            Err(e) => {
+                error!("Unable to open the file {}: {}", path, e);
+                std::process::exit(1);
+            }
+        };
+        let reader = BufReader::new(file);
+        // Read the JSON objects from the file
+        // Parse each JSON object as Annotation and add it to the annotations
+        let mut entities = Vec::new();
+        let mut texts: Vec<Text> = Vec::new();
+        let documents = reader
+            .lines()
+            .map(|line| {
+                let line = line.unwrap();
+                let annotation: Document = serde_json::from_str(line.as_str()).unwrap();
+                let text = Text {
+                    text: annotation.clone().text,
+                };
+                texts.push(text);
+                // Extract the entity name from the label
+                for label in &annotation.label {
+                    // Extarct the entity name using indexes
+                    let name = annotation.text[label.0..label.1].to_string();
+                    let entity = Entity {
+                        name: name.to_string(),
+                        label: label.2.to_string(),
+                    };
+                    entities.push(entity);
+                }
+                annotation
+            })
+            .collect();
+        Quickner {
+            config: Config::default(),
+            config_file: String::from(""),
+            documents,
+            entities,
+        }
+    }
+
+    pub fn from_spacy(path: &str) -> Quickner {
+        let file = File::open(path);
+        let file = match file {
+            Ok(file) => file,
+            Err(e) => {
+                error!("Unable to open the file {}: {}", path, e);
+                std::process::exit(1);
+            }
+        };
+        let reader = BufReader::new(file);
+        // Read the JSON objects from the file
+        // Parse each JSON object as Annotation and add it to the annotations
+        let mut entities = Vec::new();
+        let mut texts: Vec<Text> = Vec::new();
+        let spacy = serde_json::from_reader(reader);
+        let spacy: Vec<(String, SpacyEntity)> = match spacy {
+            Ok(spacy) => spacy,
+            Err(e) => {
+                error!("Unable to parse the file {}: {}", path, e);
+                std::process::exit(1);
+            }
+        };
+        let documents = spacy
+            .into_iter()
+            .map(|doc| {
+                let text = Text {
+                    text: doc.0.clone(),
+                };
+                texts.push(text);
+                // Extract the entity name from the label
+                for ent in &doc.1.entity {
+                    let name = doc.0[ent.0..ent.1].to_string();
+                    let entity = Entity {
+                        name,
+                        label: ent.2.to_string(),
+                    };
+                    entities.push(entity);
+                }
+                Document {
+                    id: 0,
+                    text: doc.0,
+                    label: doc.1.entity,
+                }
+            })
+            .collect();
+        Quickner {
+            config: Config::default(),
+            config_file: String::from(""),
+            documents,
+            entities,
         }
     }
 }

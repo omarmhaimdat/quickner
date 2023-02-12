@@ -22,9 +22,9 @@ class Entity:
     """
     def __init__(self, name: str, label: str) -> None: ...
 
-class Annotation:
+class Document:
     """
-    Annotation object.
+    Document object.
 
     Attributes:
         id (int): Id of the annotation.
@@ -38,7 +38,7 @@ class Annotation:
     def __init__(self, id: int, text: str, label: Label) -> None: ...
     def __repr__(self) -> str: ...
     @staticmethod
-    def from_string(text: str) -> Annotation: ...
+    def from_string(text: str) -> Document: ...
     def annotate(self, text: str, entities: List[Entity]) -> None: ...
 
 
@@ -178,9 +178,8 @@ class Quickner:
     Attributes:
         config_file (str): Path to the configuration file.
         config (Config): Configuration object.
-        annotations (List[Annotation]): List of annotations.
+        documents (List[Document]): List of documents.
         entities (List[Entity]): List of entities.
-        texts (List[Text]): List of texts.
 
     Methods:
         process(save: bool = False): Process texts and entities to generate annotations.
@@ -188,10 +187,77 @@ class Quickner:
     """
     config_file: str
     config: Config
-    annotations: List[Annotation]
+    documents: List[Document]
     entities: List[Entity]
-    texts: List[Text]
 
     def __init__(self, config_file: Optional[str] = None) -> None: ...
-    def process(self, save: Optional[bool] = False) -> List[Annotation]: ...
+    def process(self, save: Optional[bool] = False) -> None: ...
     def save_annotations(self, path: Optional[str] = None, format: Optional[Format] = Format.JSONL) -> None: ...
+    def to_jsonl(self, path: Optional[str] = None) -> None:
+        """
+        Save annotations to a JSONL file.
+
+        Parameters:
+            path (str): Path to the output file. Default is the path defined in the configuration file.
+
+        Returns:
+            None
+        """
+        ...
+    def to_csv(self, path: Optional[str] = None) -> None:
+        """
+        Save annotations to a CSV file.
+
+        Parameters:
+            path (str): Path to the output file. Default is the path defined in the configuration file.
+
+        Returns:
+            None
+        """
+        ...
+    
+    def to_spacy(self, path: Optional[str] = None) -> None:
+        """
+        Save annotations to a Spacy file.
+
+        Parameters:
+            path (str): Path to the output file. Default is the path defined in the configuration file.
+
+        Returns:
+            None
+        """
+        ...
+
+# Module functions
+
+def from_jsonl(path: str) -> Quickner:
+    """
+    Create a Quickner object from a JSONL file.
+
+    Parameters:
+        path (str): Path to the JSONL file.
+
+    Returns:
+        Quickner: Quickner object with:
+        - the annotations loaded from the JSONL file
+        - the entities loaded from the JSONL file and infered from the annotations
+        - the texts loaded from the JSONL file
+        - A default configuration
+    """
+    ...
+
+def from_spacy(path: str) -> Quickner:
+    """
+    Create a Quickner object from a Spacy file.
+
+    Parameters:
+        path (str): Path to the Spacy file.
+
+    Returns:
+        Quickner: Quickner object with:
+        - the annotations loaded from the Spacy file
+        - the entities loaded from the Spacy file and infered from the annotations
+        - the texts loaded from the Spacy file
+        - A default configuration
+    """
+    ...

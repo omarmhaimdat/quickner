@@ -96,7 +96,14 @@ impl Document {
     /// annotation.annotate(entities);
     /// assert_eq!(annotation.label, vec![(0, 4, "Language".to_string()), (23, 30, "Organization".to_string())]);
     /// ```
-    pub fn annotate(&mut self, entities: Vec<Entity>) {
+    pub fn annotate(&mut self, mut entities: Vec<Entity>, case_sensitive: bool) {
+        if !case_sensitive {
+            self.text = self.text.to_lowercase();
+            entities
+                .iter_mut()
+                .for_each(|e| e.name = e.name.to_lowercase());
+        }
+
         let label = Quickner::find_index(self.text.clone(), entities);
         match label {
             Some(label) => self.label = label,
@@ -333,7 +340,10 @@ impl Quickner {
         let pb = get_progress_bar(self.documents.len() as u64);
         pb.set_message("Annotating texts");
         self.documents.par_iter_mut().for_each(|document| {
-            let t = document.text.clone();
+            let mut t = document.text.clone();
+            if !self.config.texts.filters.case_sensitive {
+                t = t.to_lowercase();
+            }
             let index = Quickner::find_index(t, self.entities.clone());
             let mut index = match index {
                 Some(index) => index,

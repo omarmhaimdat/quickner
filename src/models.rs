@@ -212,7 +212,9 @@ impl PyDocument {
         }
     }
 
-    pub fn annotate(&mut self, entities: Vec<PyEntity>) {
+    // Annotate the document with the given entities
+    #[pyo3(signature = (entities, case_sensitive = false))]
+    pub fn annotate(&mut self, entities: Vec<PyEntity>, case_sensitive: bool) {
         let mut annotation = Document::from_string(self.text.clone());
         let entities = entities
             .into_iter()
@@ -221,7 +223,7 @@ impl PyDocument {
                 label: entity.label,
             })
             .collect();
-        annotation.annotate(entities);
+        annotation.annotate(entities, case_sensitive);
         self.label = annotation
             .label
             .into_iter()

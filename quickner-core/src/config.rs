@@ -32,8 +32,18 @@ pub struct Config {
     pub logging: Option<Logging>,
 }
 
-// [logging]
-// level = "info"
+impl Default for Config {
+    fn default() -> Self {
+        Config {
+            texts: Texts::default(),
+            annotations: Annotations::default(),
+            entities: Entities::default(),
+            logging: Some(Logging::default()),
+        }
+    }
+}
+
+/// A struct used to deserialize logging from the configuration file.
 #[derive(Deserialize, Clone)]
 #[serde(default)]
 pub struct Logging {
@@ -48,18 +58,31 @@ impl Default for Logging {
     }
 }
 
-#[derive(Deserialize, Clone)]
+/// A struct used to deserialize annotations from the configuration file.
+
+#[derive(Deserialize, Clone, Default)]
 pub struct Texts {
     pub input: Input,
     pub filters: Filters,
 }
 
+/// A struct used to deserialize input from the configuration file.
 #[derive(Deserialize, Clone)]
 pub struct Input {
     pub path: String,
     pub filter: Option<bool>,
 }
 
+impl Default for Input {
+    fn default() -> Self {
+        Input {
+            path: "".to_string(),
+            filter: Some(true),
+        }
+    }
+}
+
+/// A struct used to deserialize filters from the configuration file.
 #[derive(Deserialize, Clone)]
 pub struct Filters {
     pub alphanumeric: bool,
@@ -99,7 +122,6 @@ impl Display for Filters {
     }
 }
 
-// Post init function to set the special characters
 impl Filters {
     pub fn set_special_characters(&mut self) {
         let special_characters: HashSet<char> = HashSet::from_iter(vec![
@@ -166,17 +188,20 @@ impl Filters {
     }
 }
 
-#[derive(Debug, Deserialize, Clone)]
+/// A struct used to deserialize annotations from the configuration file.
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Annotations {
     pub output: Output,
     pub format: Format,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+/// A struct used to deserialize output format from the configuration file.
+#[derive(Debug, Deserialize, Clone, Default)]
 pub enum Format {
     #[serde(rename = "csv")]
     Csv,
     #[serde(rename = "jsonl")]
+    #[default]
     Jsonl,
     #[serde(rename = "spacy")]
     Spacy,
@@ -185,19 +210,23 @@ pub enum Format {
     #[serde(rename = "conll")]
     Conll,
 }
-#[derive(Debug, Deserialize, Clone)]
+
+/// A struct used to deserialize output from the configuration file.
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Output {
     pub path: String,
 }
 
-#[derive(Deserialize, Clone)]
+/// A struct used to deserialize entities from the configuration file.
+#[derive(Deserialize, Clone, Default)]
 pub struct Entities {
     pub input: Input,
     pub filters: Filters,
     pub excludes: Excludes,
 }
 
-#[derive(Debug, Deserialize, Clone)]
+/// A struct used to deserialize excludes from the configuration file.
+#[derive(Debug, Deserialize, Clone, Default)]
 pub struct Excludes {
     pub path: Option<String>,
 }

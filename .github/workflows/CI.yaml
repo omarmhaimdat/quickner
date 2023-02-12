@@ -34,7 +34,7 @@ jobs:
             override: true
       - uses: katyo/publish-crates@v2
         with:
-            path: './quickner-cli'
+            path: './quickner-core'
             args: --no-verify
             dry-run: false
             ignore-unpublished-changes: true

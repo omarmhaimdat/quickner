@@ -611,7 +611,7 @@ impl Quickner {
         let reader = BufReader::new(file);
         // Read the JSON objects from the file
         // Parse each JSON object as Annotation and add it to the annotations
-        let mut entities = Vec::new();
+        let mut entities = HashSet::new();
         let mut texts: Vec<Text> = Vec::new();
         let documents = reader
             .lines()
@@ -630,9 +630,17 @@ impl Quickner {
                         name: name.to_string(),
                         label: label.2.to_string(),
                     };
-                    entities.push(entity);
+                    entities.insert(entity);
                 }
                 annotation
+            })
+            .collect();
+        let entities = entities
+            .into_iter()
+            .map(|entity| {
+                let mut entity = entity;
+                entity.name = entity.name.to_lowercase();
+                entity
             })
             .collect();
         Quickner {
@@ -655,7 +663,7 @@ impl Quickner {
         let reader = BufReader::new(file);
         // Read the JSON objects from the file
         // Parse each JSON object as Annotation and add it to the annotations
-        let mut entities = Vec::new();
+        let mut entities = HashSet::new();
         let mut texts: Vec<Text> = Vec::new();
         let spacy = serde_json::from_reader(reader);
         let spacy: Vec<(String, SpacyEntity)> = match spacy {
@@ -679,13 +687,21 @@ impl Quickner {
                         name,
                         label: ent.2.to_string(),
                     };
-                    entities.push(entity);
+                    entities.insert(entity);
                 }
                 Document {
                     id: 0,
                     text: doc.0,
                     label: doc.1.entity,
                 }
+            })
+            .collect();
+        let entities = entities
+            .into_iter()
+            .map(|entity| {
+                let mut entity = entity;
+                entity.name = entity.name.to_lowercase();
+                entity
             })
             .collect();
         Quickner {

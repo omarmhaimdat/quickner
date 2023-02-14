@@ -42,15 +42,21 @@ pub struct Text {
 ///
 /// This object is used to hold the label used to
 /// annotate the text.
-#[derive(Eq, PartialEq, Hash, Serialize, Deserialize, Clone, Debug)]
+#[derive(Eq, Hash, Serialize, Deserialize, Clone, Debug)]
 pub struct Entity {
     pub name: String,
     pub label: String,
 }
 
+impl PartialEq for Entity {
+    fn eq(&self, other: &Self) -> bool {
+        self.name == other.name && self.label == other.label
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
-struct SpacyEntity {
-    entity: Vec<(usize, usize, String)>,
+pub struct SpacyEntity {
+    pub entity: Vec<(usize, usize, String)>,
 }
 
 /// An annotation is a text with a set of entities
@@ -105,6 +111,7 @@ impl Document {
         }
 
         let label = Quickner::find_index(self.text.clone(), entities);
+        println!("{:?}", label);
         match label {
             Some(label) => self.label = label,
             None => self.label = Vec::new(),
@@ -311,6 +318,14 @@ impl Quickner {
         let annotations: Vec<(usize, usize, String)> = annotations
             .filter(|(_, _, label)| !label.is_empty())
             .collect();
+        // Unique annotations
+        let mut annotations = annotations
+            .into_iter()
+            .collect::<HashSet<(usize, usize, String)>>()
+            .into_iter()
+            .collect::<Vec<(usize, usize, String)>>();
+        // Sort annotations by start index
+        annotations.sort_by(|a, b| a.0.cmp(&b.0));
         if !annotations.is_empty() {
             Some(annotations)
         } else {
@@ -611,7 +626,7 @@ impl Quickner {
         let reader = BufReader::new(file);
         // Read the JSON objects from the file
         // Parse each JSON object as Annotation and add it to the annotations
-        let mut entities = HashSet::new();
+        let mut entities = Vec::new();
         let mut texts: Vec<Text> = Vec::new();
         let documents = reader
             .lines()
@@ -627,22 +642,19 @@ impl Quickner {
                     // Extarct the entity name using indexes
                     let name = annotation.text[label.0..label.1].to_string();
                     let entity = Entity {
-                        name: name.to_string(),
+                        name: name.to_string().to_lowercase(),
                         label: label.2.to_string(),
                     };
-                    entities.insert(entity);
+                    entities.push(entity);
                 }
                 annotation
             })
             .collect();
         let entities = entities
             .into_iter()
-            .map(|entity| {
-                let mut entity = entity;
-                entity.name = entity.name.to_lowercase();
-                entity
-            })
-            .collect();
+            .collect::<HashSet<Entity>>()
+            .into_iter()
+            .collect::<Vec<Entity>>();
         Quickner {
             config: Config::default(),
             config_file: String::from(""),
@@ -663,7 +675,7 @@ impl Quickner {
         let reader = BufReader::new(file);
         // Read the JSON objects from the file
         // Parse each JSON object as Annotation and add it to the annotations
-        let mut entities = HashSet::new();
+        let mut entities: Vec<Entity> = Vec::new();
         let mut texts: Vec<Text> = Vec::new();
         let spacy = serde_json::from_reader(reader);
         let spacy: Vec<(String, SpacyEntity)> = match spacy {
@@ -684,10 +696,10 @@ impl Quickner {
                 for ent in &doc.1.entity {
                     let name = doc.0[ent.0..ent.1].to_string();
                     let entity = Entity {
-                        name,
+                        name: name.to_lowercase(),
                         label: ent.2.to_string(),
                     };
-                    entities.insert(entity);
+                    entities.push(entity);
                 }
                 Document {
                     id: 0,
@@ -698,12 +710,9 @@ impl Quickner {
             .collect();
         let entities = entities
             .into_iter()
-            .map(|entity| {
-                let mut entity = entity;
-                entity.name = entity.name.to_lowercase();
-                entity
-            })
-            .collect();
+            .collect::<HashSet<Entity>>()
+            .into_iter()
+            .collect::<Vec<Entity>>();
         Quickner {
             config: Config::default(),
             config_file: String::from(""),

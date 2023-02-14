@@ -58,7 +58,7 @@ Initialize the Quickner object from a file containing existing annotations.
 from quickner import Quickner
 
 quick = Quickner.from_jsonl("annotations.jsonl") # load the annotations from a jsonl file
-quick = Quickner.from_spacy("annotations.spacy") # load the annotations from a spaCy file
+quick = Quickner.from_spacy("annotations.json") # load the annotations from a spaCy file
 ```
 
 

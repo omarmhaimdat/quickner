@@ -424,38 +424,36 @@ impl PyQuickner {
 
     pub fn add_document(&mut self, document: PyDocument) {
         match self.documents {
-            Some(ref mut documents) => documents.push(document.clone().into()),
-            None => self.documents = Some(vec![document.clone().into()]),
+            Some(ref mut documents) => documents.push(document.clone()),
+            None => self.documents = Some(vec![document.clone()]),
         }
         let document = Document {
             id: document.id,
             text: document.text,
             label: document.label,
         };
-        match self.quickner {
-            Some(ref mut quickner) => quickner.add_document(document),
-            None => (),
+        if let Some(ref mut quickner) = self.quickner {
+            quickner.add_document(document)
         }
     }
 
     pub fn add_entity(&mut self, entity: PyEntity) {
         // Check if the entity is already in the list
         if let Some(ref mut entities) = self.entities {
-            if entities.contains(&entity.clone().into()) {
+            if entities.contains(&entity) {
                 return;
             }
         }
         match self.entities {
-            Some(ref mut entities) => entities.push(entity.clone().into()),
-            None => self.entities = Some(vec![entity.clone().into()]),
+            Some(ref mut entities) => entities.push(entity.clone()),
+            None => self.entities = Some(vec![entity.clone()]),
         }
         let entity = Entity {
             name: entity.name,
             label: entity.label,
         };
-        match self.quickner {
-            Some(ref mut quickner) => quickner.add_entity(entity),
-            None => (),
+        if let Some(ref mut quickner) = self.quickner {
+            quickner.add_entity(entity)
         }
     }
 

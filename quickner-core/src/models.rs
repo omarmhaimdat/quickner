@@ -10,7 +10,7 @@ use crate::{
     config::{Config, Filters, Format},
     utils::get_progress_bar,
 };
-use log::{error, info};
+use log::{error, info, warn};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -111,9 +111,8 @@ impl Document {
         }
 
         let label = Quickner::find_index(self.text.clone(), entities);
-        println!("{:?}", label);
         match label {
-            Some(label) => self.label = label,
+            Some(label) => self.label.extend(label),
             None => self.label = Vec::new(),
         }
     }
@@ -401,8 +400,16 @@ impl Quickner {
             info!("Configuration file: {}", config_file.as_str());
         } else {
             println!("Configuration file {} does not exist", config_file.as_str());
-            error!("Configuration file {} does not exist", config_file.as_str());
-            std::process::exit(1);
+            warn!(
+                "Configuration file {} does not exist, using default Config",
+                config_file.as_str()
+            );
+            return Quickner {
+                config: Config::default(),
+                config_file,
+                documents: vec![],
+                entities: vec![],
+            };
         }
         let config = Config::from_file(config_file.as_str());
         Quickner {
@@ -411,6 +418,18 @@ impl Quickner {
             documents: vec![],
             entities: vec![],
         }
+    }
+
+    pub fn add_document(&mut self, document: Document) {
+        self.documents.push(document);
+    }
+
+    pub fn add_entity(&mut self, entity: Entity) {
+        if self.entities.contains(&entity) {
+            warn!("Entity {} already exists", entity.name);
+            return;
+        }
+        self.entities.push(entity);
     }
 
     fn parse_config(&self) -> Config {

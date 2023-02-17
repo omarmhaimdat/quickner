@@ -1,4 +1,4 @@
-use pyo3::{exceptions, prelude::*};
+use pyo3::{exceptions, prelude::*, types::PyDict};
 use std::fmt::{Display, Formatter};
 
 use crate::utils::{colorize, TermColor};
@@ -194,12 +194,12 @@ pub struct PyDocument {
 #[pymethods]
 impl PyDocument {
     #[new]
-    #[pyo3(signature = (id, text, label))]
-    pub fn new(id: u32, text: &str, label: Vec<(usize, usize, String)>) -> Self {
+    #[pyo3(signature = (text, label=None))]
+    pub fn new(text: &str, label: Option<Vec<(usize, usize, String)>>) -> Self {
         PyDocument {
-            id,
+            id: 0,
             text: text.to_string(),
-            label,
+            label: label.unwrap_or(Vec::new()),
         }
     }
 
@@ -224,11 +224,13 @@ impl PyDocument {
             })
             .collect();
         annotation.annotate(entities, case_sensitive);
-        self.label = annotation
-            .label
-            .into_iter()
-            .map(|label| (label.0, label.1, label.2))
-            .collect();
+        self.label.extend(
+            annotation
+                .label
+                .into_iter()
+                .map(|label| (label.0, label.1, label.2))
+                .collect::<Vec<(usize, usize, String)>>(),
+        );
     }
 
     // Pretty print the annotation
@@ -388,11 +390,73 @@ pub struct PyExcludes {
 
 #[pymethods]
 impl PyQuickner {
+    // #[new]
+    // #[pyo3(signature = (config_path = None))]
+    // pub fn new(config_path: Option<&str>) -> Self {
+    //     let quickner = Quickner::new(config_path);
+    //     PyQuickner::from_quickner(quickner)
+    // }
+
     #[new]
-    #[pyo3(signature = (config_path = None))]
-    pub fn new(config_path: Option<&str>) -> Self {
-        let quickner = Quickner::new(config_path);
-        PyQuickner::from_quickner(quickner)
+    #[pyo3(signature = (**kwargs))]
+    pub fn new(kwargs: Option<&PyDict>) -> Self {
+        if let Some(kwargs) = kwargs {
+            let config_path = kwargs
+                .get_item("config_path")
+                .and_then(|x| x.extract().ok());
+            let quickner = Quickner::new(config_path);
+            PyQuickner::from_quickner(quickner)
+        } else {
+            let quickner = Quickner::new(None);
+            PyQuickner::from_quickner(quickner)
+        }
+    }
+
+    #[setter(documents)]
+    pub fn documents(&mut self, documents: Vec<PyDocument>) {
+        self.documents = documents.into_iter().map(|x| x.into()).collect();
+    }
+
+    #[setter(entities)]
+    pub fn entities(&mut self, entities: Vec<PyEntity>) {
+        self.entities = entities.into_iter().map(|x| x.into()).collect();
+    }
+
+    pub fn add_document(&mut self, document: PyDocument) {
+        match self.documents {
+            Some(ref mut documents) => documents.push(document.clone().into()),
+            None => self.documents = Some(vec![document.clone().into()]),
+        }
+        let document = Document {
+            id: document.id,
+            text: document.text,
+            label: document.label,
+        };
+        match self.quickner {
+            Some(ref mut quickner) => quickner.add_document(document),
+            None => (),
+        }
+    }
+
+    pub fn add_entity(&mut self, entity: PyEntity) {
+        // Check if the entity is already in the list
+        if let Some(ref mut entities) = self.entities {
+            if entities.contains(&entity.clone().into()) {
+                return;
+            }
+        }
+        match self.entities {
+            Some(ref mut entities) => entities.push(entity.clone().into()),
+            None => self.entities = Some(vec![entity.clone().into()]),
+        }
+        let entity = Entity {
+            name: entity.name,
+            label: entity.label,
+        };
+        match self.quickner {
+            Some(ref mut quickner) => quickner.add_entity(entity),
+            None => (),
+        }
     }
 
     pub fn __repr__(&self) -> PyResult<String> {

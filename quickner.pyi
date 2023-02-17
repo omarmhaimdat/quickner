@@ -35,11 +35,23 @@ class Document:
     id : int
     text: str
 
-    def __init__(self, id: int, text: str, label: Label) -> None: ...
+    def __init__(self, text: str, label: Optional[Label]) -> None: ...
     def __repr__(self) -> str: ...
+    
     @staticmethod
     def from_string(text: str) -> Document: ...
-    def annotate(self, text: str, entities: List[Entity], case_sensitive: bool = False) -> None: ...
+    def annotate(self, entities: List[Entity], case_sensitive: bool = False) -> None:
+        """
+        Annotate a text with entities.
+
+        Parameters:
+            entities (List[Entity]): List of entities to use for annotation.
+            case_sensitive (bool): Case sensitive annotation. Default is False.
+
+        Returns:
+            None
+        """
+        ...
 
 
 class Input:
@@ -190,9 +202,18 @@ class Quickner:
     documents: List[Document]
     entities: List[Entity]
 
+    def __init__(self) -> None: ...
     def __init__(self, config_file: Optional[str] = None) -> None: ...
+    def __init__(self, documents: List[Document]) -> None: ...
+    def __init__(self, entities: List[Entity]) -> None: ...
+    def __init__(self, documents: List[Document], entities: List[Entity]) -> None: ...
+    def __init__(self, documents: List[Document], entities: List[Entity], config: Config) -> None: ...
+    def __init__(self, documents: List[Document], config: Config) -> None: ...
+    
     def process(self, save: Optional[bool] = False) -> None: ...
+    
     def save_annotations(self, path: Optional[str] = None, format: Optional[Format] = Format.JSONL) -> None: ...
+    
     def to_jsonl(self, path: Optional[str] = None) -> None:
         """
         Save annotations to a JSONL file.
@@ -228,7 +249,29 @@ class Quickner:
         """
         ...
 
-# Module functions
+    def add_document(self, document: Document) -> None:
+        """
+        Add a document to the list of documents.
+
+        Parameters:
+            document (Document): Document to add.
+
+        Returns:
+            None
+        """
+        ...
+
+    def add_entity(self, entity: Entity) -> None:
+        """
+        Add an entity to the list of entities. If the entity already exists, it will be ignored.
+
+        Parameters:
+            entity (Entity): Entity to add.
+
+        Returns:
+            None
+        """
+        ...
 
 def from_jsonl(path: str) -> Quickner:
     """

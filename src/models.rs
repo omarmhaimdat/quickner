@@ -444,16 +444,22 @@ impl PyQuickner {
     // Quickner(entities: List[Entity])
 
     #[new]
-    #[pyo3(signature = (documents = Vec::new(), entities = Vec::new(), config = PyConfig::default()))]
+    #[pyo3(signature = (documents = None, entities = None, config = PyConfig::default()))]
     pub fn new(
-        documents: Vec<PyDocument>,
-        entities: Vec<PyEntity>,
+        documents: Option<Vec<PyDocument>>,
+        entities: Option<Vec<PyEntity>>,
         config: Option<PyConfig>,
     ) -> Self {
         let quickner = Quickner::new(None);
         let mut py_quickner = PyQuickner::from_quickner(quickner);
-        py_quickner.documents = Some(documents);
-        py_quickner.entities = Some(entities);
+        match documents {
+            Some(documents) => py_quickner.documents = Some(documents),
+            None => py_quickner.documents = Some(Vec::new()),
+        }
+        match entities {
+            Some(entities) => py_quickner.entities = Some(entities),
+            None => py_quickner.entities = Some(Vec::new()),
+        }
         py_quickner.config = match config {
             Some(config) => config,
             None => PyConfig::default(),

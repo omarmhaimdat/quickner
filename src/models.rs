@@ -1,4 +1,4 @@
-use pyo3::{exceptions, prelude::*, types::PyDict};
+use pyo3::{exceptions, prelude::*};
 use std::fmt::{Display, Formatter};
 
 use crate::utils::{colorize, TermColor};
@@ -33,6 +33,55 @@ pub struct PyConfig {
     pub entities: PyEntities,
     #[pyo3(get)]
     pub logging: Option<PyLogging>,
+}
+
+impl Default for PyConfig {
+    fn default() -> Self {
+        PyConfig {
+            texts: PyTexts {
+                input: PyInput {
+                    path: "None".to_string(),
+                    filter: None,
+                },
+                filters: PyFilters {
+                    alphanumeric: false,
+                    case_sensitive: false,
+                    min_length: 0,
+                    max_length: 0,
+                    punctuation: false,
+                    numbers: false,
+                    special_characters: false,
+                    accept_special_characters: None,
+                    list_of_special_characters: None,
+                },
+            },
+            annotations: PyAnnotations {
+                output: PyOutput {
+                    path: "None".to_string(),
+                },
+                format: PyFormat::SPACY,
+            },
+            entities: PyEntities {
+                input: PyInput {
+                    path: "None".to_string(),
+                    filter: None,
+                },
+                filters: PyFilters {
+                    alphanumeric: false,
+                    case_sensitive: false,
+                    min_length: 0,
+                    max_length: 0,
+                    punctuation: false,
+                    numbers: false,
+                    special_characters: false,
+                    accept_special_characters: None,
+                    list_of_special_characters: None,
+                },
+                excludes: PyExcludes { path: None },
+            },
+            logging: None,
+        }
+    }
 }
 
 #[pymethods]
@@ -390,26 +439,26 @@ pub struct PyExcludes {
 
 #[pymethods]
 impl PyQuickner {
-    // #[new]
-    // #[pyo3(signature = (config_path = None))]
-    // pub fn new(config_path: Option<&str>) -> Self {
-    //     let quickner = Quickner::new(config_path);
-    //     PyQuickner::from_quickner(quickner)
-    // }
+    // Quickner(config_path: Optional[str] = None)
+    // Quickner(documents: List[Document])
+    // Quickner(entities: List[Entity])
 
     #[new]
-    #[pyo3(signature = (**kwargs))]
-    pub fn new(kwargs: Option<&PyDict>) -> Self {
-        if let Some(kwargs) = kwargs {
-            let config_path = kwargs
-                .get_item("config_path")
-                .and_then(|x| x.extract().ok());
-            let quickner = Quickner::new(config_path);
-            PyQuickner::from_quickner(quickner)
-        } else {
-            let quickner = Quickner::new(None);
-            PyQuickner::from_quickner(quickner)
-        }
+    #[pyo3(signature = (documents = Vec::new(), entities = Vec::new(), config = PyConfig::default()))]
+    pub fn new(
+        documents: Vec<PyDocument>,
+        entities: Vec<PyEntity>,
+        config: Option<PyConfig>,
+    ) -> Self {
+        let quickner = Quickner::new(None);
+        let mut py_quickner = PyQuickner::from_quickner(quickner);
+        py_quickner.documents = Some(documents);
+        py_quickner.entities = Some(entities);
+        py_quickner.config = match config {
+            Some(config) => config,
+            None => PyConfig::default(),
+        };
+        py_quickner
     }
 
     #[setter(documents)]

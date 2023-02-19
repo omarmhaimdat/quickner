@@ -185,13 +185,14 @@ class Quickner:
     Quickner class to process texts and entities to generate annotations.
 
     Parameters:
-        config_file (str): Path to the configuration file.
-    
-    Attributes:
-        config_file (str): Path to the configuration file.
-        config (Config): Configuration object.
         documents (List[Document]): List of documents.
         entities (List[Entity]): List of entities.
+        config (Config): Configuration object.
+    
+    Attributes:
+        documents (List[Document]): List of documents.
+        entities (List[Entity]): List of entities.
+        config (Config): Configuration object.
 
     Methods:
         process(save: bool = False): Process texts and entities to generate annotations.
@@ -203,7 +204,6 @@ class Quickner:
     entities: List[Entity]
 
     def __init__(self) -> None: ...
-    def __init__(self, config_file: Optional[str] = None) -> None: ...
     def __init__(self, documents: List[Document]) -> None: ...
     def __init__(self, entities: List[Entity]) -> None: ...
     def __init__(self, documents: List[Document], entities: List[Entity]) -> None: ...

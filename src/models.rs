@@ -1,4 +1,4 @@
-use pyo3::{exceptions, prelude::*, types::PyDict};
+use pyo3::{exceptions, prelude::*};
 use std::fmt::{Display, Formatter};
 
 use crate::utils::{colorize, TermColor};
@@ -33,6 +33,55 @@ pub struct PyConfig {
     pub entities: PyEntities,
     #[pyo3(get)]
     pub logging: Option<PyLogging>,
+}
+
+impl Default for PyConfig {
+    fn default() -> Self {
+        PyConfig {
+            texts: PyTexts {
+                input: PyInput {
+                    path: "None".to_string(),
+                    filter: None,
+                },
+                filters: PyFilters {
+                    alphanumeric: false,
+                    case_sensitive: false,
+                    min_length: 0,
+                    max_length: 0,
+                    punctuation: false,
+                    numbers: false,
+                    special_characters: false,
+                    accept_special_characters: None,
+                    list_of_special_characters: None,
+                },
+            },
+            annotations: PyAnnotations {
+                output: PyOutput {
+                    path: "None".to_string(),
+                },
+                format: PyFormat::SPACY,
+            },
+            entities: PyEntities {
+                input: PyInput {
+                    path: "None".to_string(),
+                    filter: None,
+                },
+                filters: PyFilters {
+                    alphanumeric: false,
+                    case_sensitive: false,
+                    min_length: 0,
+                    max_length: 0,
+                    punctuation: false,
+                    numbers: false,
+                    special_characters: false,
+                    accept_special_characters: None,
+                    list_of_special_characters: None,
+                },
+                excludes: PyExcludes { path: None },
+            },
+            logging: None,
+        }
+    }
 }
 
 #[pymethods]
@@ -231,6 +280,17 @@ impl PyDocument {
                 .map(|label| (label.0, label.1, label.2))
                 .collect::<Vec<(usize, usize, String)>>(),
         );
+        self.set_unique_labels();
+    }
+
+    fn set_unique_labels(&mut self) {
+        let mut labels: Vec<(usize, usize, String)> = Vec::new();
+        for (start, end, label) in &self.label {
+            if !labels.contains(&(*start, *end, label.clone())) {
+                labels.push((*start, *end, label.clone()));
+            }
+        }
+        self.label = labels;
     }
 
     // Pretty print the annotation
@@ -390,26 +450,48 @@ pub struct PyExcludes {
 
 #[pymethods]
 impl PyQuickner {
-    // #[new]
-    // #[pyo3(signature = (config_path = None))]
-    // pub fn new(config_path: Option<&str>) -> Self {
-    //     let quickner = Quickner::new(config_path);
-    //     PyQuickner::from_quickner(quickner)
-    // }
+    // Quickner(config_path: Optional[str] = None)
+    // Quickner(documents: List[Document])
+    // Quickner(entities: List[Entity])
 
     #[new]
-    #[pyo3(signature = (**kwargs))]
-    pub fn new(kwargs: Option<&PyDict>) -> Self {
-        if let Some(kwargs) = kwargs {
-            let config_path = kwargs
-                .get_item("config_path")
-                .and_then(|x| x.extract().ok());
-            let quickner = Quickner::new(config_path);
-            PyQuickner::from_quickner(quickner)
-        } else {
-            let quickner = Quickner::new(None);
-            PyQuickner::from_quickner(quickner)
+    #[pyo3(signature = (documents = None, entities = None, config = PyConfig::default()))]
+    pub fn new(
+        documents: Option<Vec<PyDocument>>,
+        entities: Option<Vec<PyEntity>>,
+        config: Option<PyConfig>,
+    ) -> Self {
+        let mut quickner = Quickner::new(None);
+        match documents {
+            Some(documents) => {
+                quickner.documents = documents
+                    .into_iter()
+                    .map(|x| Document {
+                        id: x.id,
+                        text: x.text,
+                        label: x.label,
+                    })
+                    .collect();
+            }
+            None => quickner.documents = Vec::new(),
         }
+        match entities {
+            Some(entities) => {
+                quickner.entities = entities
+                    .into_iter()
+                    .map(|x| Entity {
+                        name: x.name,
+                        label: x.label,
+                    })
+                    .collect();
+            }
+            None => quickner.entities = Vec::new(),
+        }
+        // match config {
+        //     Some(config) => quickner.config = config.into(),
+        //     None => quickner.config = Config::default(),
+        // }
+        PyQuickner::from_quickner(quickner)
     }
 
     #[setter(documents)]
@@ -758,4 +840,11 @@ impl PyQuickner {
             ),
         }
     }
+    // fn to_quickner(pyquickner: PyQuickner) -> Quickner {}
+}
+
+impl PyConfig {
+    // pub to_config(config: PyConfig) -> Config {
+
+    // }
 }

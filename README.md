@@ -40,7 +40,7 @@ pip install quickner # or pip3 install quickner
 ```python
 from quickner import Quickner, Config
 
-config = Config("config.toml") # or Config() if the config file is in the current directory
+config = Config(path="config.toml") # or Config() if the config file is in the current directory
 
 # Initialize the annotator
 quick = Quickner(config=config)

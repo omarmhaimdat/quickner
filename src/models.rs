@@ -280,6 +280,17 @@ impl PyDocument {
                 .map(|label| (label.0, label.1, label.2))
                 .collect::<Vec<(usize, usize, String)>>(),
         );
+        self.set_unique_labels();
+    }
+
+    fn set_unique_labels(&mut self) {
+        let mut labels: Vec<(usize, usize, String)> = Vec::new();
+        for (start, end, label) in &self.label {
+            if !labels.contains(&(*start, *end, label.clone())) {
+                labels.push((*start, *end, label.clone()));
+            }
+        }
+        self.label = labels;
     }
 
     // Pretty print the annotation
@@ -450,20 +461,37 @@ impl PyQuickner {
         entities: Option<Vec<PyEntity>>,
         config: Option<PyConfig>,
     ) -> Self {
-        let quickner = Quickner::new(None);
-        let mut py_quickner = PyQuickner::from_quickner(quickner);
+        let mut quickner = Quickner::new(None);
         match documents {
-            Some(documents) => py_quickner.documents = Some(documents),
-            None => py_quickner.documents = Some(Vec::new()),
+            Some(documents) => {
+                quickner.documents = documents
+                    .into_iter()
+                    .map(|x| Document {
+                        id: x.id,
+                        text: x.text,
+                        label: x.label,
+                    })
+                    .collect();
+            }
+            None => quickner.documents = Vec::new(),
         }
         match entities {
-            Some(entities) => py_quickner.entities = Some(entities),
-            None => py_quickner.entities = Some(Vec::new()),
+            Some(entities) => {
+                quickner.entities = entities
+                    .into_iter()
+                    .map(|x| Entity {
+                        name: x.name,
+                        label: x.label,
+                    })
+                    .collect();
+            }
+            None => quickner.entities = Vec::new(),
         }
-        py_quickner.config = match config {
-            Some(config) => config,
-            None => PyConfig::default(),
-        };
+        // match config {
+        //     Some(config) => quickner.config = config.into(),
+        //     None => quickner.config = Config::default(),
+        // }
+        let py_quickner = PyQuickner::from_quickner(quickner);
         py_quickner
     }
 
@@ -813,4 +841,11 @@ impl PyQuickner {
             ),
         }
     }
+    // fn to_quickner(pyquickner: PyQuickner) -> Quickner {}
+}
+
+impl PyConfig {
+    // pub to_config(config: PyConfig) -> Config {
+
+    // }
 }

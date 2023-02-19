@@ -70,6 +70,16 @@ pub struct Document {
     pub label: Vec<(usize, usize, String)>,
 }
 
+impl PartialEq for Document {
+    fn eq(&self, other: &Self) -> bool {
+        self.id == other.id && self.text == other.text && self.label == other.label
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        !self.eq(other)
+    }
+}
+
 impl Document {
     /// Create an annotation from a string
     /// # Examples
@@ -113,8 +123,22 @@ impl Document {
         let label = Quickner::find_index(self.text.clone(), entities);
         match label {
             Some(label) => self.label.extend(label),
-            None => self.label = Vec::new(),
+            None => self.label.extend(Vec::new()),
         }
+        // Remove duplicate labels based on start and end index and label
+        self.label
+            .sort_by(|a, b| a.0.cmp(&b.0).then(a.1.cmp(&b.1)).then(a.2.cmp(&b.2)));
+        self.set_unique_labels();
+    }
+
+    fn set_unique_labels(&mut self) {
+        let mut labels: Vec<(usize, usize, String)> = Vec::new();
+        for (start, end, label) in &self.label {
+            if !labels.contains(&(*start, *end, label.clone())) {
+                labels.push((*start, *end, label.clone()));
+            }
+        }
+        self.label = labels;
     }
 }
 
@@ -263,12 +287,6 @@ impl Format {
     }
 }
 
-impl PartialEq for Document {
-    fn eq(&self, other: &Self) -> bool {
-        self.id == other.id
-    }
-}
-
 impl Quickner {
     /// Find the index of the entities in the text
     /// # Arguments
@@ -364,7 +382,7 @@ impl Quickner {
                 None => vec![],
             };
             index.sort_by(|a, b| a.0.cmp(&b.0));
-            document.label = index;
+            document.label.extend(index);
             pb.inc(1);
         });
         pb.finish();
@@ -477,28 +495,38 @@ impl Quickner {
     /// This function will return an error if the entities file does not exist
     /// This function will return an error if the texts file does not exist
     pub fn process(&mut self, save: bool) -> Result<(), Box<dyn Error>> {
+        println!("Processing texts and entities");
+        println!("Length of entities: {}", self.entities.len());
+        println!("Length of documents: {}", self.documents.len());
         let config = self.parse_config();
         config.summary();
+        println!("Length of entities: {}", self.entities.len());
+        println!("Length of documents: {}", self.documents.len());
 
         info!("----------------------------------------");
-        let entities: HashSet<Entity> = self.entities(
-            config.entities.input.path.as_str(),
-            config.entities.filters,
-            config.entities.input.filter.unwrap_or(false),
-        );
-        let texts: HashSet<Text> = self.texts(
-            config.texts.input.path.as_str(),
-            config.texts.filters,
-            config.texts.input.filter.unwrap_or(false),
-        );
-        self.documents = texts
-            .par_iter()
-            .map(|text| Document {
-                id: 0,
-                text: text.text.clone(),
-                label: vec![],
-            })
-            .collect();
+        if self.entities.len() == 0 {
+            let entities: HashSet<Entity> = self.entities(
+                config.entities.input.path.as_str(),
+                config.entities.filters,
+                config.entities.input.filter.unwrap_or(false),
+            );
+            self.entities = entities.into_iter().collect();
+        }
+        if self.documents.len() == 0 {
+            let texts: HashSet<Text> = self.texts(
+                config.texts.input.path.as_str(),
+                config.texts.filters,
+                config.texts.input.filter.unwrap_or(false),
+            );
+            self.documents = texts
+                .par_iter()
+                .map(|text| Document {
+                    id: 0,
+                    text: text.text.clone(),
+                    label: vec![],
+                })
+                .collect();
+        }
         let excludes: HashSet<String> = match config.entities.excludes.path {
             Some(path) => {
                 info!("Reading excludes from {}", path.as_str());
@@ -510,12 +538,23 @@ impl Quickner {
             }
         };
         // Remove excludes from entities
-        let entities: HashSet<Entity> = entities
+        let entities: HashSet<Entity> = self
+            .entities
             .iter()
             .filter(|entity| !excludes.contains(&entity.name))
             .cloned()
             .collect();
         self.entities = Vec::from_iter(entities);
+        if !self.config.entities.filters.case_sensitive {
+            self.entities = self
+                .entities
+                .iter()
+                .map(|entity| Entity {
+                    name: entity.name.to_lowercase(),
+                    label: entity.label.clone(),
+                })
+                .collect();
+        }
         info!("{} entities found", self.entities.len());
         self.annotate();
         info!("{} annotations found", self.documents.len());
@@ -564,17 +603,17 @@ impl Quickner {
                                 entities.insert(entity);
                             }
                         }
-                        Err(e) => {
-                            error!("Unable to parse the entities file: {}", e);
-                            std::process::exit(1);
+                        Err(_) => {
+                            warn!("Unable to parse the entities file, using empty list");
+                            return HashSet::new();
                         }
                     }
                 }
                 entities
             }
-            Err(e) => {
-                error!("Unable to parse the entities file: {}", e);
-                std::process::exit(1);
+            Err(_) => {
+                warn!("Unable to parse the entities file, using empty list");
+                HashSet::new()
             }
         }
     }

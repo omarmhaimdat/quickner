@@ -407,8 +407,6 @@ impl Quickner {
     /// # Errors
     /// This function will return an error if the configuration file does not exist
     pub fn new(config_file: Option<&str>) -> Self {
-        println!("New instance of Quickner");
-        println!("Configuration file: {config_file:?}");
         let config_file = match config_file {
             Some(config_file) => config_file.to_string(),
             None => "./config.toml".to_string(),
@@ -495,14 +493,8 @@ impl Quickner {
     /// This function will return an error if the entities file does not exist
     /// This function will return an error if the texts file does not exist
     pub fn process(&mut self, save: bool) -> Result<(), Box<dyn Error>> {
-        println!("Processing texts and entities");
-        println!("Length of entities: {}", self.entities.len());
-        println!("Length of documents: {}", self.documents.len());
         let config = self.parse_config();
         config.summary();
-        println!("Length of entities: {}", self.entities.len());
-        println!("Length of documents: {}", self.documents.len());
-
         info!("----------------------------------------");
         if self.entities.len() == 0 {
             let entities: HashSet<Entity> = self.entities(

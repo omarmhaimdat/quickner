@@ -88,5 +88,7 @@ mod config;
 mod models;
 mod utils;
 
-pub use crate::config::{Config, Entities, Excludes, Filters, Format, Input, Logging, Texts};
+pub use crate::config::{
+    Annotations, Config, Entities, Excludes, Filters, Format, Input, Logging, Output, Texts,
+};
 pub use crate::models::{Document, Entity, Quickner, SpacyEntity, Text};

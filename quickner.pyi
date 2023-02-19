@@ -180,6 +180,8 @@ class Config:
     entities: Entities
     logging: Logging
 
+    def __init__(self, config_file: str) -> None: ...
+
 class Quickner:
     """
     Quickner class to process texts and entities to generate annotations.

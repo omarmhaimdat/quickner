@@ -1,8 +1,14 @@
 use pyo3::{exceptions, prelude::*};
-use std::fmt::{Display, Formatter};
+use std::{
+    collections::HashSet,
+    fmt::{Display, Formatter},
+};
 
 use crate::utils::{colorize, TermColor};
-use quickner::{Document, Entity, Quickner};
+use quickner::{
+    Annotations, Config, Document, Entities, Entity, Excludes, Filters, Format, Input, Logging,
+    Output, Quickner, Texts,
+};
 use serde::{Deserialize, Serialize};
 /// Transform Rust code into Python code
 /// Create a Python Class version of the Rust struct
@@ -81,62 +87,6 @@ impl Default for PyConfig {
             },
             logging: None,
         }
-    }
-}
-
-#[pymethods]
-impl PyConfig {
-    #[new]
-    fn new(config: PyConfig) -> Self {
-        config
-    }
-
-    // Pretty print the config
-    fn __repr__(&self) -> PyResult<String> {
-        let mut output = String::new();
-        output.push_str(&format!(
-            "
-        {}:
-        ---------------------------
-        {}
-            Texts input path: {}
-            Texts filters: 
-                {}
-        {}
-            Annotations output path: {}
-            Annotations format: {}
-        {}
-            Entities input path: {}
-            Entities filters: 
-                {}
-            Entities excludes: {}
-        {}
-            Logging level: {}
-        ",
-            colorize("Configuration file summary", TermColor::Blue),
-            colorize("TEXTS", TermColor::Green),
-            self.texts.input.path,
-            self.texts.filters,
-            colorize("ANNOTATIONS", TermColor::Green),
-            self.annotations.output.path,
-            self.annotations.format,
-            colorize("ENTITIES", TermColor::Green),
-            self.entities.input.path,
-            self.entities.filters,
-            self.entities
-                .excludes
-                .path
-                .clone()
-                .unwrap_or("None".to_string()),
-            colorize("LOGGING", TermColor::Green),
-            self.logging
-                .as_ref()
-                .unwrap_or(&PyLogging {
-                    level: "None".to_string()
-                })
-                .level
-        ));
-        Ok(output)
     }
 }
 
@@ -491,6 +441,11 @@ impl PyQuickner {
         //     Some(config) => quickner.config = config.into(),
         //     None => quickner.config = Config::default(),
         // }
+        let config = match config {
+            Some(config) => config,
+            None => PyConfig::default(),
+        };
+        quickner.config = PyConfig::to_config(config);
         PyQuickner::from_quickner(quickner)
     }
 
@@ -843,8 +798,201 @@ impl PyQuickner {
     // fn to_quickner(pyquickner: PyQuickner) -> Quickner {}
 }
 
+#[pymethods]
 impl PyConfig {
-    // pub to_config(config: PyConfig) -> Config {
+    #[new]
+    #[pyo3(signature = (path = None))]
+    pub fn new(path: Option<&str>) -> PyResult<Self> {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => "config.toml".to_string(),
+        };
+        let config: Config = Config::from_file(path.as_str());
+        Ok(PyConfig::from_config(config))
+    }
+    // Pretty print the config
+    fn __repr__(&self) -> PyResult<String> {
+        let mut output = String::new();
+        output.push_str(&format!(
+            "
+        {}:
+        ---------------------------
+        {}
+            Texts input path: {}
+            Texts filters: 
+                {}
+        {}
+            Annotations output path: {}
+            Annotations format: {}
+        {}
+            Entities input path: {}
+            Entities filters: 
+                {}
+            Entities excludes: {}
+        {}
+            Logging level: {}
+        ",
+            colorize("Configuration file summary", TermColor::Blue),
+            colorize("TEXTS", TermColor::Green),
+            self.texts.input.path,
+            self.texts.filters,
+            colorize("ANNOTATIONS", TermColor::Green),
+            self.annotations.output.path,
+            self.annotations.format,
+            colorize("ENTITIES", TermColor::Green),
+            self.entities.input.path,
+            self.entities.filters,
+            self.entities
+                .excludes
+                .path
+                .clone()
+                .unwrap_or("None".to_string()),
+            colorize("LOGGING", TermColor::Green),
+            self.logging
+                .as_ref()
+                .unwrap_or(&PyLogging {
+                    level: "None".to_string()
+                })
+                .level
+        ));
+        Ok(output)
+    }
+}
 
-    // }
+impl PyConfig {
+    fn from_config(config: Config) -> PyConfig {
+        PyConfig {
+            texts: PyTexts {
+                input: PyInput {
+                    path: config.texts.input.path,
+                    filter: config.texts.input.filter,
+                },
+                filters: PyFilters {
+                    alphanumeric: config.texts.filters.alphanumeric,
+                    case_sensitive: config.texts.filters.case_sensitive,
+                    min_length: config.texts.filters.min_length,
+                    max_length: config.texts.filters.max_length,
+                    punctuation: config.texts.filters.punctuation,
+                    numbers: config.texts.filters.numbers,
+                    special_characters: config.texts.filters.special_characters,
+                    accept_special_characters: config.texts.filters.accept_special_characters,
+                    list_of_special_characters: config
+                        .texts
+                        .filters
+                        .list_of_special_characters
+                        .map(|list| list.into_iter().collect::<Vec<char>>()),
+                },
+            },
+            annotations: PyAnnotations {
+                output: PyOutput {
+                    path: config.annotations.output.path,
+                },
+                format: match config.annotations.format {
+                    quickner::Format::Csv => PyFormat::CSV,
+                    quickner::Format::Jsonl => PyFormat::JSONL,
+                    quickner::Format::Spacy => PyFormat::SPACY,
+                    quickner::Format::Brat => PyFormat::BRAT,
+                    quickner::Format::Conll => PyFormat::CONLL,
+                },
+            },
+            entities: PyEntities {
+                input: PyInput {
+                    path: config.entities.input.path,
+                    filter: config.entities.input.filter,
+                },
+                filters: PyFilters {
+                    alphanumeric: config.entities.filters.alphanumeric,
+                    case_sensitive: config.entities.filters.case_sensitive,
+                    min_length: config.entities.filters.min_length,
+                    max_length: config.entities.filters.max_length,
+                    punctuation: config.entities.filters.punctuation,
+                    numbers: config.entities.filters.numbers,
+                    special_characters: config.entities.filters.special_characters,
+                    accept_special_characters: config.entities.filters.accept_special_characters,
+                    list_of_special_characters: config
+                        .entities
+                        .filters
+                        .list_of_special_characters
+                        .map(|list| list.into_iter().collect::<Vec<char>>()),
+                },
+                excludes: PyExcludes {
+                    path: config.entities.excludes.path,
+                },
+            },
+            logging: match config.logging {
+                Some(logging) => Some(PyLogging {
+                    level: logging.level,
+                }),
+                None => None,
+            },
+        }
+    }
+
+    fn to_config(config: PyConfig) -> Config {
+        Config {
+            texts: Texts {
+                input: Input {
+                    path: config.texts.input.path,
+                    filter: config.texts.input.filter,
+                },
+                filters: Filters {
+                    alphanumeric: config.texts.filters.alphanumeric,
+                    case_sensitive: config.texts.filters.case_sensitive,
+                    min_length: config.texts.filters.min_length,
+                    max_length: config.texts.filters.max_length,
+                    punctuation: config.texts.filters.punctuation,
+                    numbers: config.texts.filters.numbers,
+                    special_characters: config.texts.filters.special_characters,
+                    accept_special_characters: config.texts.filters.accept_special_characters,
+                    list_of_special_characters: config
+                        .texts
+                        .filters
+                        .list_of_special_characters
+                        .map(|list| list.into_iter().collect::<HashSet<char>>()),
+                },
+            },
+            annotations: Annotations {
+                output: Output {
+                    path: config.annotations.output.path,
+                },
+                format: match config.annotations.format {
+                    PyFormat::CSV => Format::Csv,
+                    PyFormat::JSONL => Format::Jsonl,
+                    PyFormat::SPACY => Format::Spacy,
+                    PyFormat::BRAT => Format::Brat,
+                    PyFormat::CONLL => Format::Conll,
+                },
+            },
+            entities: Entities {
+                input: Input {
+                    path: config.entities.input.path,
+                    filter: config.entities.input.filter,
+                },
+                filters: Filters {
+                    alphanumeric: config.entities.filters.alphanumeric,
+                    case_sensitive: config.entities.filters.case_sensitive,
+                    min_length: config.entities.filters.min_length,
+                    max_length: config.entities.filters.max_length,
+                    punctuation: config.entities.filters.punctuation,
+                    numbers: config.entities.filters.numbers,
+                    special_characters: config.entities.filters.special_characters,
+                    accept_special_characters: config.entities.filters.accept_special_characters,
+                    list_of_special_characters: config
+                        .entities
+                        .filters
+                        .list_of_special_characters
+                        .map(|list| list.into_iter().collect::<HashSet<char>>()),
+                },
+                excludes: Excludes {
+                    path: config.entities.excludes.path,
+                },
+            },
+            logging: match config.logging {
+                Some(logging) => Some(Logging {
+                    level: logging.level,
+                }),
+                None => None,
+            },
+        }
+    }
 }

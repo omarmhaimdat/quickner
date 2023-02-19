@@ -491,8 +491,7 @@ impl PyQuickner {
         //     Some(config) => quickner.config = config.into(),
         //     None => quickner.config = Config::default(),
         // }
-        let py_quickner = PyQuickner::from_quickner(quickner);
-        py_quickner
+        PyQuickner::from_quickner(quickner)
     }
 
     #[setter(documents)]

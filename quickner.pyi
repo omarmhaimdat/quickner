@@ -274,6 +274,18 @@ class Quickner:
             None
         """
         ...
+    
+    def find_documents(self, label: str) -> List[Document]:
+        """
+        Find documents with a specific label.
+
+        Parameters:
+            label (str): Label to search.
+
+        Returns:
+            List[Document]: List of documents with the label.
+        """
+        ...
 
 def from_jsonl(path: str) -> Quickner:
     """

@@ -8,12 +8,12 @@
 
 use crate::{
     config::{Config, Filters, Format},
-    utils::get_progress_bar,
+    utils::{get_progress_bar, hash_string},
 };
 use log::{error, info, warn};
 use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
-use std::path::Path;
+use std::{collections::HashMap, path::Path};
 use std::{
     collections::HashSet,
     fs::File,
@@ -31,6 +31,8 @@ pub struct Quickner {
     pub config_file: String,
     pub documents: Vec<Document>,
     pub entities: Vec<Entity>,
+    pub documents_hash: HashMap<String, Document>,
+    pub documents_index: HashMap<String, Vec<String>>,
 }
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone, Hash, Debug)]
@@ -65,7 +67,7 @@ pub struct SpacyEntity {
 /// entities found in the text.
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Document {
-    pub id: u32,
+    pub id: String,
     pub text: String,
     pub label: Vec<(usize, usize, String)>,
 }
@@ -90,11 +92,17 @@ impl Document {
     /// assert_eq!(annotation.text, "Rust is developed by Mozilla");
     /// ```
     pub fn from_string(text: String) -> Self {
+        let id = hash_string(text.as_str());
         Document {
-            id: 0,
+            id,
             text,
             label: Vec::new(),
         }
+    }
+
+    pub fn new(text: String, label: Vec<(usize, usize, String)>) -> Self {
+        let id = hash_string(text.as_str());
+        Self { id, text, label }
     }
 
     /// Annotate text given a set of entities
@@ -385,6 +393,30 @@ impl Quickner {
             document.label.extend(index);
             pb.inc(1);
         });
+        self.documents_hash = self
+            .documents
+            .iter()
+            .map(|document| (document.id.clone(), document.clone()))
+            .collect();
+        // Create LABEL dictionary {"label": [doc_id, doc_id, ...]}
+        self.documents_index = self
+            .documents
+            .iter()
+            .map(|document| {
+                let mut index: HashMap<String, Vec<String>> = HashMap::new();
+                for label in &document.label {
+                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
+                    entry.push(document.id.clone());
+                }
+                index
+            })
+            .fold(HashMap::new(), |mut acc, x| {
+                for (key, value) in x {
+                    let entry = acc.entry(key).or_insert(Vec::new());
+                    entry.extend(value);
+                }
+                acc
+            });
         pb.finish();
     }
 }
@@ -415,7 +447,6 @@ impl Quickner {
         if Path::new(config_file.as_str()).exists() {
             info!("Configuration file: {}", config_file.as_str());
         } else {
-            println!("Configuration file {} does not exist", config_file.as_str());
             warn!(
                 "Configuration file {} does not exist, using default Config",
                 config_file.as_str()
@@ -425,6 +456,8 @@ impl Quickner {
                 config_file,
                 documents: vec![],
                 entities: vec![],
+                documents_hash: HashMap::new(),
+                documents_index: HashMap::new(),
             };
         }
         let config = Config::from_file(config_file.as_str());
@@ -433,6 +466,8 @@ impl Quickner {
             config_file,
             documents: vec![],
             entities: vec![],
+            documents_hash: HashMap::new(),
+            documents_index: HashMap::new(),
         }
     }
 
@@ -512,11 +547,7 @@ impl Quickner {
             );
             self.documents = texts
                 .par_iter()
-                .map(|text| Document {
-                    id: 0,
-                    text: text.text.clone(),
-                    label: vec![],
-                })
+                .map(|text| Document::new(text.text.clone(), vec![]))
                 .collect();
         }
         let excludes: HashSet<String> = match config.entities.excludes.path {
@@ -678,7 +709,7 @@ impl Quickner {
         // Parse each JSON object as Annotation and add it to the annotations
         let mut entities = Vec::new();
         let mut texts: Vec<Text> = Vec::new();
-        let documents = reader
+        let documents: Vec<Document> = reader
             .lines()
             .map(|line| {
                 let line = line.unwrap();
@@ -705,11 +736,36 @@ impl Quickner {
             .collect::<HashSet<Entity>>()
             .into_iter()
             .collect::<Vec<Entity>>();
+        let documents_hash = documents
+            .iter()
+            .map(|document| (document.id.clone(), document.clone()))
+            .collect();
+        // Create LABEL dictionary {"label": [doc_id, doc_id, ...]}
+        let documents_index: HashMap<String, Vec<String>> = documents
+            .iter()
+            .map(|document| {
+                let mut index: HashMap<String, Vec<String>> = HashMap::new();
+                for label in &document.label {
+                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
+                    entry.push(document.id.clone());
+                }
+                index
+            })
+            .fold(HashMap::new(), |mut acc, x| {
+                for (key, value) in x {
+                    let entry = acc.entry(key).or_insert(Vec::new());
+                    entry.extend(value);
+                }
+                acc
+            });
+        println!("{:?}", documents_index);
         Quickner {
             config: Config::default(),
             config_file: String::from(""),
             documents,
             entities,
+            documents_hash,
+            documents_index,
         }
     }
 
@@ -735,7 +791,7 @@ impl Quickner {
                 std::process::exit(1);
             }
         };
-        let documents = spacy
+        let documents: Vec<Document> = spacy
             .into_iter()
             .map(|doc| {
                 let text = Text {
@@ -751,11 +807,7 @@ impl Quickner {
                     };
                     entities.push(entity);
                 }
-                Document {
-                    id: 0,
-                    text: doc.0,
-                    label: doc.1.entity,
-                }
+                Document::new(doc.0, doc.1.entity)
             })
             .collect();
         let entities = entities
@@ -763,11 +815,34 @@ impl Quickner {
             .collect::<HashSet<Entity>>()
             .into_iter()
             .collect::<Vec<Entity>>();
+        let documents_hash = documents
+            .iter()
+            .map(|document| (document.id.clone(), document.clone()))
+            .collect();
+        let documents_index: HashMap<String, Vec<String>> = documents
+            .iter()
+            .map(|document| {
+                let mut index: HashMap<String, Vec<String>> = HashMap::new();
+                for label in &document.label {
+                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
+                    entry.push(document.id.clone());
+                }
+                index
+            })
+            .fold(HashMap::new(), |mut acc, x| {
+                for (key, value) in x {
+                    let entry = acc.entry(key).or_insert(Vec::new());
+                    entry.extend(value);
+                }
+                acc
+            });
         Quickner {
             config: Config::default(),
             config_file: String::from(""),
             documents,
             entities,
+            documents_hash,
+            documents_index,
         }
     }
 }

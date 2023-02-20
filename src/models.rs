@@ -6,8 +6,8 @@ use std::{
 
 use crate::utils::{colorize, TermColor};
 use quickner::{
-    Annotations, Config, Document, Entities, Entity, Excludes, Filters, Format, Input, Logging,
-    Output, Quickner, Texts,
+    hash_string, Annotations, Config, Document, Entities, Entity, Excludes, Filters, Format, Input,
+    Logging, Output, Quickner, Texts,
 };
 use serde::{Deserialize, Serialize};
 /// Transform Rust code into Python code
@@ -183,7 +183,7 @@ impl Display for PyFilters {
 #[pyclass(name = "Document")]
 pub struct PyDocument {
     #[pyo3(get)]
-    pub id: u32,
+    pub id: String,
     #[pyo3(get)]
     pub text: String,
     #[pyo3(get)]
@@ -195,8 +195,9 @@ impl PyDocument {
     #[new]
     #[pyo3(signature = (text, label=None))]
     pub fn new(text: &str, label: Option<Vec<(usize, usize, String)>>) -> Self {
+        let id = hash_string(text);
         PyDocument {
-            id: 0,
+            id,
             text: text.to_string(),
             label: label.unwrap_or(Vec::new()),
         }
@@ -204,8 +205,9 @@ impl PyDocument {
 
     #[staticmethod]
     pub fn from_string(text: &str) -> Self {
+        let id = hash_string(text);
         PyDocument {
-            id: 0,
+            id,
             text: text.to_string(),
             label: Vec::new(),
         }
@@ -299,6 +301,16 @@ impl PyDocument {
         }
         pretty.push_str(&self.text[start..]);
         Ok(pretty)
+    }
+}
+
+impl From<PyDocument> for Document {
+    fn from(document: PyDocument) -> Self {
+        Document {
+            id: document.id,
+            text: document.text,
+            label: document.label,
+        }
     }
 }
 
@@ -416,11 +428,7 @@ impl PyQuickner {
             Some(documents) => {
                 quickner.documents = documents
                     .into_iter()
-                    .map(|x| Document {
-                        id: x.id,
-                        text: x.text,
-                        label: x.label,
-                    })
+                    .map(|x| Document::new(x.text, x.label))
                     .collect();
             }
             None => quickner.documents = Vec::new(),
@@ -464,11 +472,7 @@ impl PyQuickner {
             Some(ref mut documents) => documents.push(document.clone()),
             None => self.documents = Some(vec![document.clone()]),
         }
-        let document = Document {
-            id: document.id,
-            text: document.text,
-            label: document.label,
-        };
+        let document = Document::new(document.text, document.label);
         if let Some(ref mut quickner) = self.quickner {
             quickner.add_document(document)
         }
@@ -544,6 +548,7 @@ impl PyQuickner {
             }
         };
         let annotations: Result<(), _> = quickner.process(save);
+        self.quickner = Some(quickner.clone());
         match annotations {
             Ok(annotations) => annotations,
             Err(error) => return Err(PyErr::new::<exceptions::PyException, _>(error.to_string())),
@@ -569,6 +574,7 @@ impl PyQuickner {
                 })
                 .collect(),
         );
+
         Ok(())
     }
 
@@ -590,11 +596,7 @@ impl PyQuickner {
             .as_ref()
             .unwrap()
             .iter()
-            .map(|annotation| Document {
-                id: annotation.id,
-                text: annotation.text.clone(),
-                label: annotation.label.clone(),
-            })
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
             .collect();
         let save_annotations = format.save(documents, &path);
         match save_annotations {
@@ -636,11 +638,7 @@ impl PyQuickner {
             .as_ref()
             .unwrap()
             .iter()
-            .map(|annotation| Document {
-                id: annotation.id,
-                text: annotation.text.clone(),
-                label: annotation.label.clone(),
-            })
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
             .collect();
         quickner::Format::Jsonl
             .save(documents, path.as_str())
@@ -658,11 +656,7 @@ impl PyQuickner {
             .as_ref()
             .unwrap()
             .iter()
-            .map(|annotation| Document {
-                id: annotation.id,
-                text: annotation.text.clone(),
-                label: annotation.label.clone(),
-            })
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
             .collect();
         quickner::Format::Csv
             .save(documents, path.as_str())
@@ -680,15 +674,41 @@ impl PyQuickner {
             .as_ref()
             .unwrap()
             .iter()
-            .map(|annotation| Document {
-                id: annotation.id,
-                text: annotation.text.clone(),
-                label: annotation.label.clone(),
-            })
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
             .collect();
         quickner::Format::Spacy
             .save(documents, path.as_str())
             .unwrap();
+    }
+
+    #[pyo3(signature = (label))]
+    pub fn find_documents(&self, label: &str) -> Vec<PyDocument> {
+        let documents_index = match &self.quickner {
+            Some(quickner) => quickner.documents_index.clone(),
+            None => return vec![],
+        };
+        let documents_ids = match documents_index.get(label) {
+            Some(documents_ids) => documents_ids.clone(),
+            None => return vec![],
+        };
+        let documents = match &self.quickner {
+            Some(quickner) => {
+                let documents = documents_ids
+                    .into_iter()
+                    .map(|id| {
+                        let document = quickner.documents_hash.get(&id).unwrap();
+                        PyDocument {
+                            id: document.id.clone(),
+                            text: document.text.clone(),
+                            label: document.label.clone(),
+                        }
+                    })
+                    .collect();
+                documents
+            }
+            None => return vec![],
+        };
+        documents
     }
 }
 
@@ -776,10 +796,8 @@ impl PyQuickner {
                 quickner
                     .documents
                     .iter()
-                    .map(|annotation| PyDocument {
-                        id: annotation.id,
-                        text: annotation.text.clone(),
-                        label: annotation.label.clone(),
+                    .map(|annotation| {
+                        PyDocument::new(annotation.text.as_str(), Some(annotation.label.clone()))
                     })
                     .collect(),
             ),

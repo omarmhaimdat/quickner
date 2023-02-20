@@ -1,6 +1,6 @@
 [package]
 name = "quickner-core"
-version = "0.0.1-alpha.8"
+version = "0.0.1-alpha.9"
 edition = "2021"
 authors = ["Omar MHAIMDAT"]
 license-file = "LICENSE"
@@ -25,3 +25,4 @@ toml = "0.7.0"
 env_logger = "0.10.0"
 rayon = "1.6"
 csv = "1.1"
+sha2 = "0.10.6"

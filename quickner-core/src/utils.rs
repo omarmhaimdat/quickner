@@ -91,3 +91,12 @@ pub(crate) fn get_progress_bar(total: u64) -> ProgressBar {
         .progress_chars("##-"));
     progress_bar
 }
+
+pub fn hash_string(text: &str) -> String {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::{Hash, Hasher};
+
+    let mut hasher = DefaultHasher::new();
+    text.hash(&mut hasher);
+    format!("{:x}", hasher.finish())
+}

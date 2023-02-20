@@ -92,3 +92,4 @@ pub use crate::config::{
     Annotations, Config, Entities, Excludes, Filters, Format, Input, Logging, Output, Texts,
 };
 pub use crate::models::{Document, Entity, Quickner, SpacyEntity, Text};
+pub use crate::utils::hash_string;

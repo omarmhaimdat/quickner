@@ -3,6 +3,39 @@ from enum import Enum
 
 Label = NewType("Label", List[Tuple[int, int, str]])
 
+
+def from_jsonl(path: str) -> Quickner:
+    """
+    Create a Quickner object from a JSONL file.
+
+    Parameters:
+        path (str): Path to the JSONL file.
+
+    Returns:
+        Quickner: Quickner object with:
+        - the annotations loaded from the JSONL file
+        - the entities loaded from the JSONL file and infered from the annotations
+        - the texts loaded from the JSONL file
+        - A default configuration
+    """
+    ...
+
+def from_spacy(path: str) -> Quickner:
+    """
+    Create a Quickner object from a Spacy file.
+
+    Parameters:
+        path (str): Path to the Spacy file.
+
+    Returns:
+        Quickner: Quickner object with:
+        - the annotations loaded from the Spacy file
+        - the entities loaded from the Spacy file and infered from the annotations
+        - the texts loaded from the Spacy file
+        - A default configuration
+    """
+    ...
+
 class Text:
     """
     Text object.
@@ -263,6 +296,18 @@ class Quickner:
         """
         ...
 
+    def add_string(self, string: str) -> None:
+        """
+        Add a string to the list of documents.
+
+        Parameters:
+            string (str): String to add.
+
+        Returns:
+            None
+        """
+        ...
+
     def add_entity(self, entity: Entity) -> None:
         """
         Add an entity to the list of entities. If the entity already exists, it will be ignored.
@@ -286,35 +331,3 @@ class Quickner:
             List[Document]: List of documents with the label.
         """
         ...
-
-def from_jsonl(path: str) -> Quickner:
-    """
-    Create a Quickner object from a JSONL file.
-
-    Parameters:
-        path (str): Path to the JSONL file.
-
-    Returns:
-        Quickner: Quickner object with:
-        - the annotations loaded from the JSONL file
-        - the entities loaded from the JSONL file and infered from the annotations
-        - the texts loaded from the JSONL file
-        - A default configuration
-    """
-    ...
-
-def from_spacy(path: str) -> Quickner:
-    """
-    Create a Quickner object from a Spacy file.
-
-    Parameters:
-        path (str): Path to the Spacy file.
-
-    Returns:
-        Quickner: Quickner object with:
-        - the annotations loaded from the Spacy file
-        - the entities loaded from the Spacy file and infered from the annotations
-        - the texts loaded from the Spacy file
-        - A default configuration
-    """
-    ...

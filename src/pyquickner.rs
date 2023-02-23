@@ -1,0 +1,369 @@
+use pyo3::{exceptions, prelude::*};
+
+use crate::{
+    pyconfig::{
+        PyAnnotations, PyConfig, PyEntities, PyExcludes, PyFilters, PyFormat, PyInput, PyLogging,
+        PyOutput, PyTexts,
+    },
+    pydocument::PyDocument,
+    pyentity::PyEntity,
+    utils::{colorize, TermColor},
+};
+use quickner::{Document, Entity, Quickner};
+
+#[pyclass(name = "Quickner")]
+pub struct PyQuickner {
+    #[pyo3(get)]
+    pub config: PyConfig,
+    #[pyo3(get)]
+    pub config_path: String,
+    #[pyo3(get)]
+    pub documents: Vec<PyDocument>,
+    #[pyo3(get)]
+    pub entities: Vec<PyEntity>,
+    quickner: Quickner,
+}
+
+#[pymethods]
+impl PyQuickner {
+    // Quickner(config_path: Optional[str] = None)
+    // Quickner(documents: List[Document])
+    // Quickner(entities: List[Entity])
+
+    #[new]
+    #[pyo3(signature = (documents = None, entities = None, config = PyConfig::default()))]
+    pub fn new(
+        documents: Option<Vec<PyDocument>>,
+        entities: Option<Vec<PyEntity>>,
+        config: Option<PyConfig>,
+    ) -> Self {
+        let mut quickner = Quickner::new(None);
+        match documents {
+            Some(documents) => {
+                quickner.documents = documents.into_iter().map(|x| Document::from(x)).collect();
+            }
+            None => quickner.documents = Vec::new(),
+        }
+        match entities {
+            Some(entities) => {
+                quickner.entities = entities.into_iter().map(|x| Entity::from(x)).collect();
+            }
+            None => quickner.entities = Vec::new(),
+        }
+        let config = match config {
+            Some(config) => config,
+            None => PyConfig::default(),
+        };
+        quickner.config = PyConfig::to_config(config);
+        PyQuickner::from(quickner)
+    }
+
+    #[setter(documents)]
+    pub fn documents(&mut self, documents: Vec<PyDocument>) {
+        self.documents = documents.into_iter().map(|x| x.into()).collect();
+    }
+
+    #[setter(entities)]
+    pub fn entities(&mut self, entities: Vec<PyEntity>) {
+        self.entities = entities.into_iter().map(|x| x.into()).collect();
+    }
+
+    pub fn add_document(&mut self, document: PyDocument) {
+        if self.documents.contains(&document) {
+            return;
+        }
+        match self.documents {
+            ref mut documents => documents.push(document.clone()),
+        }
+        let document = Document::from(document);
+        self.quickner.add_document(document);
+    }
+
+    pub fn add_string(&mut self, text: &str) {
+        let document = Document::from_string(text.to_string());
+        self.quickner.add_document(document.clone());
+        self.add_document(PyDocument::from(document));
+    }
+
+    pub fn add_entity(&mut self, entity: PyEntity) {
+        // Check if the entity is already in the list
+        if self.entities.contains(&entity) {
+            return;
+        }
+        match self.entities {
+            ref mut entities => entities.push(entity.clone()),
+        }
+        let entity = Entity {
+            name: entity.name,
+            label: entity.label,
+        };
+        self.quickner.add_entity(entity);
+    }
+
+    pub fn __repr__(&self) -> PyResult<String> {
+        let mut repr = String::new();
+        repr.push_str(&colorize("Entities: ", TermColor::Yellow));
+        repr.push_str(&format!("{} | ", self.entities.len()));
+        repr.push_str(&colorize("Documents: ", TermColor::Green));
+        repr.push_str(&format!("{} | ", self.documents.len()));
+        repr.push_str(&colorize("Annotations: ", TermColor::Blue));
+
+        let annotations_hash = std::collections::HashMap::new();
+        let annotations_count =
+            self.documents
+                .clone()
+                .into_iter()
+                .fold(annotations_hash, |mut acc, document| {
+                    for (_, _, label) in document.label {
+                        let count = acc.entry(label).or_insert(0);
+                        *count += 1;
+                    }
+                    acc
+                });
+        let annotations_count = annotations_count
+            .into_iter()
+            .map(|(label, count)| format!("{label}: {count}"))
+            .collect::<Vec<String>>()
+            .join(", ");
+
+        repr.push_str(&annotations_count);
+        Ok(repr)
+    }
+
+    #[pyo3(signature = (save = false))]
+    pub fn process(&mut self, save: bool) -> PyResult<()> {
+        let annotations: Result<(), _> = self.quickner.process(save);
+        match annotations {
+            Ok(annotations) => annotations,
+            Err(error) => return Err(PyErr::new::<exceptions::PyException, _>(error.to_string())),
+        };
+        self.documents = self
+            .quickner
+            .documents
+            .clone()
+            .into_iter()
+            .map(|document| PyDocument::from(document))
+            .collect::<Vec<PyDocument>>();
+        self.entities = self
+            .quickner
+            .entities
+            .clone()
+            .into_iter()
+            .map(|entity| PyEntity::from(entity))
+            .collect::<Vec<PyEntity>>();
+        Ok(())
+    }
+
+    #[pyo3(signature = (path = None, format = PyFormat::JSONL))]
+    pub fn save_annotations(&self, path: Option<&str>, format: PyFormat) -> PyResult<String> {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => self.config.annotations.output.path.clone(),
+        };
+        let format = match format {
+            PyFormat::CSV => quickner::Format::Csv,
+            PyFormat::JSONL => quickner::Format::Jsonl,
+            PyFormat::SPACY => quickner::Format::Spacy,
+            PyFormat::BRAT => quickner::Format::Brat,
+            PyFormat::CONLL => quickner::Format::Conll,
+        };
+        let save_annotations = format.save(self.quickner.documents.clone(), &path);
+        match save_annotations {
+            Ok(_) => Ok(save_annotations.unwrap()),
+            Err(error) => Err(PyErr::new::<exceptions::PyException, _>(error.to_string())),
+        }
+    }
+
+    #[pyo3(signature = (path = None))]
+    #[staticmethod]
+    pub fn from_jsonl(path: Option<&str>) -> PyQuickner {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => String::from(""),
+        };
+        let quickner = Quickner::from_jsonl(path.as_str());
+        PyQuickner::from(quickner)
+    }
+
+    #[pyo3(signature = (path = None))]
+    #[staticmethod]
+    pub fn from_spacy(path: Option<&str>) -> PyQuickner {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => String::from(""),
+        };
+        let quickner = Quickner::from_spacy(path.as_str());
+        PyQuickner::from(quickner)
+    }
+
+    #[pyo3(signature = (path = None))]
+    pub fn to_jsonl(&self, path: Option<&str>) {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => self.config.annotations.output.path.clone(),
+        };
+        let documents: Vec<Document> = self
+            .documents
+            .iter()
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .collect();
+        quickner::Format::Jsonl
+            .save(documents, path.as_str())
+            .unwrap();
+    }
+
+    #[pyo3(signature = (path = None))]
+    pub fn to_csv(&self, path: Option<&str>) {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => self.config.annotations.output.path.clone(),
+        };
+        let documents: Vec<Document> = self
+            .documents
+            .iter()
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .collect();
+        quickner::Format::Csv
+            .save(documents, path.as_str())
+            .unwrap();
+    }
+
+    #[pyo3(signature = (path = None))]
+    pub fn to_spacy(&self, path: Option<&str>) {
+        let path = match path {
+            Some(path) => path.to_string(),
+            None => self.config.annotations.output.path.clone(),
+        };
+        let documents: Vec<Document> = self
+            .documents
+            .iter()
+            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .collect();
+        quickner::Format::Spacy
+            .save(documents, path.as_str())
+            .unwrap();
+    }
+
+    #[pyo3(signature = (label))]
+    pub fn find_documents(&self, label: &str) -> Vec<PyDocument> {
+        let documents_index = match &self.quickner {
+            quickner => quickner.documents_index.to_owned(),
+        };
+        let documents_ids = match documents_index.get(label) {
+            Some(documents_ids) => documents_ids,
+            None => return vec![],
+        };
+        let documents = match &self.quickner {
+            quickner => {
+                let documents = documents_ids
+                    .into_iter()
+                    .map(|id| {
+                        let document = quickner.documents_hash.get(id).unwrap();
+                        PyDocument::from(document.to_owned())
+                    })
+                    .collect();
+                documents
+            }
+        };
+        documents
+    }
+}
+
+impl From<Quickner> for PyQuickner {
+    fn from(quickner: Quickner) -> Self {
+        PyQuickner {
+            quickner: quickner.clone(),
+            config: PyConfig {
+                texts: PyTexts {
+                    input: PyInput {
+                        path: quickner.config.texts.input.path,
+                        filter: quickner.config.texts.input.filter,
+                    },
+                    filters: PyFilters {
+                        alphanumeric: quickner.config.texts.filters.alphanumeric,
+                        case_sensitive: quickner.config.texts.filters.case_sensitive,
+                        min_length: quickner.config.texts.filters.min_length,
+                        max_length: quickner.config.texts.filters.max_length,
+                        punctuation: quickner.config.texts.filters.punctuation,
+                        numbers: quickner.config.texts.filters.numbers,
+                        special_characters: quickner.config.texts.filters.special_characters,
+                        accept_special_characters: quickner
+                            .config
+                            .texts
+                            .filters
+                            .accept_special_characters,
+                        list_of_special_characters: quickner
+                            .config
+                            .texts
+                            .filters
+                            .list_of_special_characters
+                            .map(|list| list.into_iter().collect::<Vec<char>>()),
+                    },
+                },
+                annotations: PyAnnotations {
+                    output: PyOutput {
+                        path: quickner.config.annotations.output.path,
+                    },
+                    format: match quickner.config.annotations.format {
+                        quickner::Format::Csv => PyFormat::CSV,
+                        quickner::Format::Jsonl => PyFormat::JSONL,
+                        quickner::Format::Spacy => PyFormat::SPACY,
+                        quickner::Format::Brat => PyFormat::BRAT,
+                        quickner::Format::Conll => PyFormat::CONLL,
+                    },
+                },
+                entities: PyEntities {
+                    input: PyInput {
+                        path: quickner.config.entities.input.path,
+                        filter: quickner.config.entities.input.filter,
+                    },
+                    filters: PyFilters {
+                        alphanumeric: quickner.config.entities.filters.alphanumeric,
+                        case_sensitive: quickner.config.entities.filters.case_sensitive,
+                        min_length: quickner.config.entities.filters.min_length,
+                        max_length: quickner.config.entities.filters.max_length,
+                        punctuation: quickner.config.entities.filters.punctuation,
+                        numbers: quickner.config.entities.filters.numbers,
+                        special_characters: quickner.config.entities.filters.special_characters,
+                        accept_special_characters: quickner
+                            .config
+                            .entities
+                            .filters
+                            .accept_special_characters,
+                        list_of_special_characters: quickner
+                            .config
+                            .entities
+                            .filters
+                            .list_of_special_characters
+                            .map(|list| list.into_iter().collect::<Vec<char>>()),
+                    },
+                    excludes: PyExcludes {
+                        path: quickner.config.entities.excludes.path,
+                    },
+                },
+                logging: match quickner.config.logging {
+                    Some(logging) => Some(PyLogging {
+                        level: logging.level,
+                    }),
+                    None => None,
+                },
+            },
+            config_path: quickner.config_file,
+            documents: quickner
+                .documents
+                .iter()
+                .map(|annotation| {
+                    PyDocument::new(annotation.text.as_str(), Some(annotation.label.clone()))
+                })
+                .collect(),
+            entities: quickner
+                .entities
+                .iter()
+                .map(|entity| PyEntity {
+                    name: entity.name.clone(),
+                    label: entity.label.clone(),
+                })
+                .collect(),
+        }
+    }
+}

@@ -158,9 +158,7 @@ impl Quickner {
             });
         pb.finish();
     }
-}
 
-impl Quickner {
     /// Creates a new instance of Quickner
     /// If no configuration file is provided, the default configuration file is used.
     /// Default: ./config.toml
@@ -211,6 +209,16 @@ impl Quickner {
     }
 
     pub fn add_document(&mut self, document: Document) {
+        let document = self.documents_hash.get(&document.id);
+        if document.is_some() {
+            warn!("Document {} already exists", document.unwrap().id);
+            return;
+        }
+        self.documents.push(document.unwrap().clone());
+    }
+
+    pub fn add_document_from_string(&mut self, text: &str) {
+        let document = Document::from_string(text.to_string());
         self.documents.push(document);
     }
 

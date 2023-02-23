@@ -69,11 +69,20 @@ impl PyQuickner {
     }
 
     pub fn add_document(&mut self, document: PyDocument) {
+        if self.documents.contains(&document) {
+            return;
+        }
         match self.documents {
             ref mut documents => documents.push(document.clone()),
         }
-        let document = Document::new(document.text, document.label);
+        let document = Document::from(document);
         self.quickner.add_document(document);
+    }
+
+    pub fn add_string(&mut self, text: &str) {
+        let document = Document::from_string(text.to_string());
+        self.quickner.add_document(document.clone());
+        self.add_document(PyDocument::from(document));
     }
 
     pub fn add_entity(&mut self, entity: PyEntity) {

@@ -85,11 +85,17 @@
 //! annotation.annotate(entities);
 //! ```
 mod config;
+mod document;
+mod entity;
 mod models;
+mod quickner;
 mod utils;
 
 pub use crate::config::{
     Annotations, Config, Entities, Excludes, Filters, Format, Input, Logging, Output, Texts,
 };
-pub use crate::models::{Document, Entity, Quickner, SpacyEntity, Text};
+pub use crate::document::Document;
+pub use crate::entity::Entity;
+pub use crate::models::SpacyEntity;
+pub use crate::quickner::Quickner;
 pub use crate::utils::hash_string;

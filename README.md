@@ -94,9 +94,42 @@ entities = [rust, mozilla, python, guido, java, james]
 quick = Quickner(documents=documents, entities=entities)
 quick.process()
 
->>> Entities: 6 | Documents: 3 | Annotations: PERSON: 2, Programming Language: 3, ORG: 1
-quick.documents
->>> [Document(id=0, text=rust is made by Mozilla, label=[(0, 4, Programming Language), (16, 23, ORG)]), Document(id=0, text=Python was created by Guido van Rossum, label=[(0, 6, Programming Language), (22, 38, PERSON)]), Document(id=0, text=Java was created by James Gosling, label=[(0, 4, Programming Language), (20, 33, PERSON)])]
+>>> quick
+Entities: 6 | Documents: 3 | Annotations: PERSON: 2, Programming Language: 3, ORG: 1
+>>> quick.documents 
+[Document(id=87e03d58b1ba4d72, text=rust is made by Mozilla, label=[(0, 4, Programming Language), (16, 23, ORG)]), Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, Programming Language), (22, 38, PERSON)]), Document(id=e4324f9818e7e598, text=Java was created by James Gosling, label=[(0, 4, Programming Language), (20, 33, PERSON)])]
+```
+
+### Find documents by label
+
+```python
+from quickner import Quickner, Document, Entity
+
+# Create documents
+doc_1 = Document("rust is made by Mozilla")
+doc_2 = Document("Python was created by Guido van Rossum")
+doc_3 = Document("Java was created by James Gosling")
+
+# Create entities
+rust = Entity("Rust", "Programming Language")
+mozilla = Entity("Mozilla", "ORG")
+python = Entity("Python", "Programming Language")
+guido = Entity("Guido van Rossum", "PERSON")
+java = Entity("Java", "Programming Language")
+james = Entity("James Gosling", "PERSON")
+
+# Documents and entities can be added to a list
+documents = [doc_1, doc_2, doc_3]
+entities = [rust, mozilla, python, guido, java, james]
+
+# Initialize the annotator
+quick = Quickner(documents=documents, entities=entities)
+quick.process()
+
+>>> quick
+Entities: 6 | Documents: 3 | Annotations: PERSON: 2, Programming Language: 3, ORG: 1
+>>> quick.find_documents("PERSON")
+[Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, Programming Language), (22, 38, PERSON)]), Document(id=e4324f9818e7e598, text=Java was created by James Gosling, label=[(0, 4, Programming Language), (20, 33, PERSON)])]
 ```
 
 ### Single document annotation
@@ -141,7 +174,7 @@ entities = [Entity("Rust", "Programming Language"), Entity("Mozilla", "ORG")]
 # Annotate the document with the entities, case_sensitive is set to False by default
 rust.annotate(entities, case_sensitive=True)
 >>> rust
-Document(id=0, text=Rust is made by Mozilla, label=[(0, 4, Programming Language), (16, 23, ORG)])
+Document(id=87e03d58b1ba4d72, text=rust is made by Mozilla, label=[(16, 23, ORG)])
 
 ## Configuration
 

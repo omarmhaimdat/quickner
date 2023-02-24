@@ -1,6 +1,6 @@
 [package]
 name = "quickner-core"
-version = "0.0.1-alpha.9"
+version = "0.0.1-alpha.10"
 edition = "2021"
 authors = ["Omar MHAIMDAT"]
 license-file = "LICENSE"

@@ -1,4 +1,5 @@
-from typing import Optional, List, Tuple, NewType
+from ast import Dict
+from typing import Iterator, Optional, List, Tuple, NewType
 from enum import Enum
 
 Label = NewType("Label", List[Tuple[int, int, str]])
@@ -281,6 +282,18 @@ class Quickner:
 
         Returns:
             None
+        """
+        ...
+
+    def spacy(self, chunks: Optional[int] = None) -> Iterator[List[Dict["entity", List[Tuple[int, int, str]]]]]:
+        """
+        Generate Spacy documents.
+
+        Parameters:
+            chunks (int): Number of documents to split the list of documents into. Default is None.
+
+        Returns:
+            Iterator[List[Dict["entity", List[Tuple[int, int, str]]]]]: Iterator of List of Spacy Format.
         """
         ...
 

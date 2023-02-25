@@ -145,6 +145,49 @@ Entities: 6 | Documents: 3 | Annotations: PERSON: 2, PL: 3, ORG: 1
 [Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, PL), (22, 38, PERSON)]), Document(id=e4324f9818e7e598, text=Java was created by James Gosling, label=[(0, 4, PL), (20, 33, PERSON)])]
 ```
 
+### Get a Spacy Compatible Generator Object
+
+```python
+# Create documents from texts
+texts = (
+  "rust is made by Mozilla",
+  "Python was created by Guido van Rossum",
+  "Java was created by James Gosling at Sun Microsystems",
+  "Swift was created by Chris Lattner and Apple",
+)
+documents = [Document(text) for text in texts]
+
+# Create entities
+entities = (
+  ("Rust", "PL"),
+  ("Python", "PL"),
+  ("Java", "PL"),
+  ("Swift", "PL"),
+  ("Mozilla", "ORG"),
+  ("Apple", "ORG"),
+  ("Sun Microsystems", "ORG"),
+  ("Guido van Rossum", "PERSON"),
+  ("James Gosling", "PERSON"),
+  ("Chris Lattner", "PERSON"),
+)
+entities = [Entity(*(entity)) for entity in entities]
+
+# Initialize the annotator
+quick = Quickner(documents=documents, entities=entities)
+quick.process()
+
+# Get a spacy compatible generator object
+>>> quick.spacy()
+<builtins.SpacyGenerator object at 0x102311440>
+# Divide the documents into chunks
+>>> chunks = quick.spacy(chunks=2)
+>>> for chunk in chunks:
+...     print(chunk)
+...
+[('rust is made by Mozilla', {'entitiy': [(0, 4, 'PL'), (16, 23, 'ORG')]}), ('Python was created by Guido van Rossum', {'entitiy': [(0, 6, 'PL'), (22, 38, 'PERSON')]})]
+[('Java was created by James Gosling at Sun Microsystems', {'entitiy': [(0, 4, 'PL'), (20, 33, 'PERSON'), (37, 53, 'ORG')]}), ('Swift was created by Chris Lattner and Apple', {'entitiy': [(0, 5, 'PL'), (21, 34, 'PERSON'), (39, 44, 'ORG')]})]
+```
+
 ### Single document annotation
 
 ```python

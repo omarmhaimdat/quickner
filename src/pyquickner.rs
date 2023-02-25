@@ -1,4 +1,4 @@
-use pyo3::{exceptions, prelude::*};
+use std::collections::HashMap;
 
 use crate::{
     pyconfig::{
@@ -9,7 +9,11 @@ use crate::{
     pyentity::PyEntity,
     utils::{colorize, TermColor},
 };
-use quickner::{Document, Entity, Quickner};
+use pyo3::{
+    exceptions::{self, PyGeneratorExit},
+    prelude::*,
+};
+use quickner::{Document, Entity, Quickner, SpacyEntity};
 
 #[pyclass(name = "Quickner")]
 pub struct PyQuickner {
@@ -22,6 +26,50 @@ pub struct PyQuickner {
     #[pyo3(get)]
     pub entities: Vec<PyEntity>,
     quickner: Quickner,
+}
+
+#[pyclass(name = "SpacyEntity")]
+pub struct PySpacyEntity {
+    #[pyo3(get)]
+    pub entity: Vec<(usize, usize, String)>,
+}
+
+#[pyclass(name = "SpacyGenerator")]
+pub struct PySpacyGenerator {
+    #[pyo3(get)]
+    pub entities: Vec<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>>,
+}
+
+#[pymethods]
+impl PySpacyGenerator {
+    #[new]
+    #[pyo3(signature = (entities))]
+    fn new(entities: Vec<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>>) -> Self {
+        PySpacyGenerator { entities }
+    }
+
+    fn __iter__(slf: PyRef<'_, Self>) -> PyRef<'_, Self> {
+        slf
+    }
+
+    fn __next__(
+        mut slf: PyRefMut<'_, Self>,
+    ) -> Option<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>> {
+        if slf.entities.is_empty() {
+            PyGeneratorExit::new_err("No more entities");
+            None
+        } else {
+            Some(slf.entities.remove(0))
+        }
+    }
+}
+
+impl From<SpacyEntity> for PySpacyEntity {
+    fn from(entity: SpacyEntity) -> Self {
+        PySpacyEntity {
+            entity: entity.entity,
+        }
+    }
 }
 
 #[pymethods]
@@ -266,6 +314,26 @@ impl PyQuickner {
             }
         };
         documents
+    }
+
+    #[pyo3(signature = (chunks = None))]
+    pub fn spacy(&self, chunks: Option<usize>) -> PySpacyGenerator {
+        let spacy = self.quickner.spacy(chunks);
+
+        let spacy = spacy
+            .into_iter()
+            .map(|chunk| {
+                chunk
+                    .into_iter()
+                    .map(|(text, entity)| {
+                        let mut map = HashMap::new();
+                        map.insert("entitiy".to_string(), entity.entity);
+                        (text, map)
+                    })
+                    .collect::<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>>()
+            })
+            .collect();
+        PySpacyGenerator { entities: spacy }
     }
 }
 

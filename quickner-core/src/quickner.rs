@@ -591,4 +591,27 @@ impl Quickner {
             documents_index,
         }
     }
+
+    pub fn spacy(&self, chunks: Option<usize>) -> Vec<Vec<(String, SpacyEntity)>> {
+        let mut spacy: Vec<(String, SpacyEntity)> = Vec::new();
+        for document in &self.documents {
+            let mut entity: Vec<(usize, usize, String)> = Vec::new();
+            for label in &document.label {
+                entity.push((label.0, label.1, label.2.clone()));
+            }
+            spacy.push((document.text.clone(), SpacyEntity { entity }));
+        }
+        let chunks = match chunks {
+            Some(chunks) => chunks,
+            None => spacy.len(),
+        };
+        // Split the spacy vector into chunks
+        // i.e. if the vector has 1000 elements and the chunks is 100 then
+        // the vector will be split into 10 chunks of 100 elements each
+        let mut spacy_chunks: Vec<Vec<(String, SpacyEntity)>> = Vec::new();
+        for chunk in spacy.chunks(chunks) {
+            spacy_chunks.push(chunk.to_vec());
+        }
+        spacy_chunks
+    }
 }

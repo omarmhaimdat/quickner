@@ -102,7 +102,7 @@ impl PyDocument {
     // Pretty print the annotation
     // Example: Document(id=1, text="Hello World", label=[(0, 5, "Hello"), (6, 11, "World")])
     pub fn __repr__(&self) -> PyResult<String> {
-        let mut repr = format!("Document(id={}, text={}, label=[", self.id, self.text);
+        let mut repr = format!("Document(id=\"{}\", text={}, label=[", self.id, self.text);
         for (start, end, label) in &self.label {
             repr.push_str(&format!("({start}, {end}, {label}), "));
         }

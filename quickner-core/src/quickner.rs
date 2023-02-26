@@ -28,7 +28,22 @@ pub struct Quickner {
     pub documents: Vec<Document>,
     pub entities: Vec<Entity>,
     pub documents_hash: HashMap<String, Document>,
-    pub documents_index: HashMap<String, Vec<String>>,
+    pub documents_label_index: HashMap<String, Vec<String>>,
+    pub documents_entities_index: HashMap<String, Vec<String>>,
+}
+
+impl Default for Quickner {
+    fn default() -> Self {
+        Self {
+            config: Config::default(),
+            config_file: "./config.toml".to_string(),
+            documents: Vec::new(),
+            entities: Vec::new(),
+            documents_hash: HashMap::new(),
+            documents_label_index: HashMap::new(),
+            documents_entities_index: HashMap::new(),
+        }
+    }
 }
 
 impl Quickner {
@@ -137,25 +152,8 @@ impl Quickner {
             .iter()
             .map(|document| (document.id.clone(), document.clone()))
             .collect();
-        // Create LABEL dictionary {"label": [doc_id, doc_id, ...]}
-        self.documents_index = self
-            .documents
-            .iter()
-            .map(|document| {
-                let mut index: HashMap<String, Vec<String>> = HashMap::new();
-                for label in &document.label {
-                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
-                    entry.push(document.id.clone());
-                }
-                index
-            })
-            .fold(HashMap::new(), |mut acc, x| {
-                for (key, value) in x {
-                    let entry = acc.entry(key).or_insert(Vec::new());
-                    entry.extend(value);
-                }
-                acc
-            });
+        self.build_label_index();
+        self.build_entity_index();
         pb.finish();
     }
 
@@ -188,38 +186,37 @@ impl Quickner {
                 "Configuration file {} does not exist, using default Config",
                 config_file.as_str()
             );
-            return Quickner {
-                config: Config::default(),
-                config_file,
-                documents: vec![],
-                entities: vec![],
-                documents_hash: HashMap::new(),
-                documents_index: HashMap::new(),
-            };
+            return Quickner::default();
         }
         let config = Config::from_file(config_file.as_str());
-        Quickner {
-            config,
-            config_file,
-            documents: vec![],
-            entities: vec![],
-            documents_hash: HashMap::new(),
-            documents_index: HashMap::new(),
-        }
+        let mut quick = Quickner::default();
+        quick.config = config;
+        quick.config_file = config_file;
+        quick
     }
 
     pub fn add_document(&mut self, document: Document) {
-        let document = self.documents_hash.get(&document.id);
-        if document.is_some() {
-            warn!("Document {} already exists", document.unwrap().id);
-            return;
+        {
+            let document = self.documents_hash.get(&document.id);
+            if document.is_some() {
+                warn!("Document {} already exists", document.unwrap().id);
+                return;
+            }
         }
-        self.documents.push(document.unwrap().clone());
+        self.documents.push(document.clone());
+        self.documents_hash
+            .insert(document.id.clone(), document.clone());
+        self.add_to_entity_index(&document);
+        self.add_to_label_index(&document);
     }
 
     pub fn add_document_from_string(&mut self, text: &str) {
         let document = Document::from_string(text.to_string());
-        self.documents.push(document);
+        self.documents.push(document.clone());
+        self.documents_hash
+            .insert(document.id.clone(), document.clone());
+        self.add_to_entity_index(&document);
+        self.add_to_label_index(&document);
     }
 
     pub fn add_entity(&mut self, entity: Entity) {
@@ -478,41 +475,20 @@ impl Quickner {
                 annotation
             })
             .collect();
-        let entities = entities
-            .into_iter()
-            .collect::<HashSet<Entity>>()
-            .into_iter()
-            .collect::<Vec<Entity>>();
-        let documents_hash = documents
-            .iter()
-            .map(|document| (document.id.clone(), document.clone()))
-            .collect();
-        // Create LABEL dictionary {"label": [doc_id, doc_id, ...]}
-        let documents_index: HashMap<String, Vec<String>> = documents
-            .iter()
-            .map(|document| {
-                let mut index: HashMap<String, Vec<String>> = HashMap::new();
-                for label in &document.label {
-                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
-                    entry.push(document.id.clone());
-                }
-                index
-            })
-            .fold(HashMap::new(), |mut acc, x| {
-                for (key, value) in x {
-                    let entry = acc.entry(key).or_insert(Vec::new());
-                    entry.extend(value);
-                }
-                acc
-            });
-        Quickner {
+        let entities = Quickner::unique_entities(entities);
+        let documents_hash = Quickner::document_hash(&documents);
+        let mut quick = Quickner {
             config: Config::default(),
             config_file: String::from(""),
             documents,
             entities,
             documents_hash,
-            documents_index,
-        }
+            documents_label_index: HashMap::new(),
+            documents_entities_index: HashMap::new(),
+        };
+        quick.build_entity_index();
+        quick.build_label_index();
+        quick
     }
 
     pub fn from_spacy(path: &str) -> Quickner {
@@ -556,40 +532,20 @@ impl Quickner {
                 Document::new(doc.0, doc.1.entity)
             })
             .collect();
-        let entities = entities
-            .into_iter()
-            .collect::<HashSet<Entity>>()
-            .into_iter()
-            .collect::<Vec<Entity>>();
-        let documents_hash = documents
-            .iter()
-            .map(|document| (document.id.clone(), document.clone()))
-            .collect();
-        let documents_index: HashMap<String, Vec<String>> = documents
-            .iter()
-            .map(|document| {
-                let mut index: HashMap<String, Vec<String>> = HashMap::new();
-                for label in &document.label {
-                    let entry = index.entry(label.2.clone()).or_insert(Vec::new());
-                    entry.push(document.id.clone());
-                }
-                index
-            })
-            .fold(HashMap::new(), |mut acc, x| {
-                for (key, value) in x {
-                    let entry = acc.entry(key).or_insert(Vec::new());
-                    entry.extend(value);
-                }
-                acc
-            });
-        Quickner {
+        let entities = Quickner::unique_entities(entities);
+        let documents_hash = Quickner::document_hash(&documents);
+        let mut quick = Quickner {
             config: Config::default(),
             config_file: String::from(""),
             documents,
             entities,
             documents_hash,
-            documents_index,
-        }
+            documents_label_index: HashMap::new(),
+            documents_entities_index: HashMap::new(),
+        };
+        quick.build_entity_index();
+        quick.build_label_index();
+        quick
     }
 
     pub fn spacy(&self, chunks: Option<usize>) -> Vec<Vec<(String, SpacyEntity)>> {
@@ -613,5 +569,87 @@ impl Quickner {
             spacy_chunks.push(chunk.to_vec());
         }
         spacy_chunks
+    }
+}
+
+impl Quickner {
+    fn build_label_index(&mut self) {
+        let mut index: HashMap<String, Vec<String>> = HashMap::new();
+        for document in &self.documents {
+            for label in &document.label {
+                let entry = index.entry(label.2.clone()).or_insert(Vec::new());
+                entry.push(document.id.clone());
+            }
+        }
+        self.documents_label_index = index;
+    }
+
+    fn build_entity_index(&mut self) {
+        let mut index: HashMap<String, Vec<String>> = HashMap::new();
+        for document in &self.documents {
+            for label in &document.label {
+                let name = document.text[label.0..label.1].to_string();
+                let entry = index.entry(name.to_lowercase()).or_insert(Vec::new());
+                entry.push(document.id.clone());
+            }
+        }
+        self.documents_entities_index = index;
+    }
+
+    fn add_to_label_index(&mut self, document: &Document) {
+        for label in &document.label {
+            let entry = self
+                .documents_label_index
+                .entry(label.2.clone())
+                .or_insert(Vec::new());
+            entry.push(document.id.clone());
+        }
+    }
+
+    fn add_to_entity_index(&mut self, document: &Document) {
+        for label in &document.label {
+            let name = document.text[label.0..label.1].to_string();
+            let entry = self
+                .documents_entities_index
+                .entry(name.to_lowercase())
+                .or_insert(Vec::new());
+            entry.push(document.id.clone());
+        }
+    }
+
+    fn _remove_from_label_index(&mut self, document: &Document) {
+        for label in &document.label {
+            let entry = self
+                .documents_label_index
+                .entry(label.2.clone())
+                .or_insert(Vec::new());
+            entry.retain(|x| x != &document.id);
+        }
+    }
+
+    fn _remove_from_entity_index(&mut self, document: &Document) {
+        for label in &document.label {
+            let name = document.text[label.0..label.1].to_string();
+            let entry = self
+                .documents_entities_index
+                .entry(name.to_lowercase())
+                .or_insert(Vec::new());
+            entry.retain(|x| x != &document.id);
+        }
+    }
+
+    fn unique_entities(entities: Vec<Entity>) -> Vec<Entity> {
+        entities
+            .into_iter()
+            .collect::<HashSet<Entity>>()
+            .into_iter()
+            .collect::<Vec<Entity>>()
+    }
+
+    fn document_hash(documents: &Vec<Document>) -> HashMap<String, Document> {
+        documents
+            .into_iter()
+            .map(|document| (document.id.clone(), document.clone()))
+            .collect::<HashMap<String, Document>>()
     }
 }

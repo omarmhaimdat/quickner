@@ -333,7 +333,7 @@ class Quickner:
         """
         ...
     
-    def find_documents(self, label: str) -> List[Document]:
+    def find_documents_by_label(self, label: str) -> List[Document]:
         """
         Find documents with a specific label.
 
@@ -342,5 +342,19 @@ class Quickner:
 
         Returns:
             List[Document]: List of documents with the label.
+        """
+        ...
+    
+    def find_documents_by_entity(self, name: str) -> List[Document]:
+        """
+        Find documents with a specific entity.
+        >>> quickner.find_documents_by_entity("John")
+        [Document(id="f9c68f53ee5319c8", text=John is a person., [[0, 4, "PERSON"]])]
+
+        Parameters:
+            name (str): Name of the entity to find.
+
+        Returns:
+            List[Document]: List of documents with the entity.
         """
         ...

@@ -1,5 +1,5 @@
 /target
-/quickner-cli/target
+/quickner-core/target
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

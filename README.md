@@ -1,8 +1,8 @@
 
 <div align="center">
-  <h1>Quickner ⚡ </h1>
+  <h1 style="font-size:40px;">Quickner ⚡ </h1>
   <p>
-    <strong>A simple, fast, and easy to use NER annotator for Python</strong>
+    <strong style="font-size:20px;">A simple, fast, and easy to use NER annotator for Python</strong>
   </p>
   <p>
     <a href="https://badge.fury.io/py/quickner"><img src="https://badge.fury.io/py/quickner.svg" alt="PyPI version" height="18"></a>
@@ -21,7 +21,6 @@
 [![Build Status](https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fomarmhaimdat%2Fquickner%2Fbadge%3Fref%3Dmaster&style=flat)](https://actions-badge.atrox.dev/omarmhaimdat/quickner/goto?ref=master)
 
 ![Showcase](showcase.gif) -->
-
 
 Quickner is a new tool to quickly annotate texts for NER (Named Entity Recognition). It is written in Rust and accessible through a Python API.
 
@@ -61,17 +60,22 @@ quick.process() # or annotator.process(True) to save the annotated data to a fil
 from quickner import Quickner, Document
 
 # Create documents
-doc_1 = Document("rust is made by Mozilla")
-doc_2 = Document("Python was created by Guido van Rossum")
-doc_3 = Document("Java was created by James Gosling")
+rust = Document("rust is made by Mozilla")
+python = Document("Python was created by Guido van Rossum")
+java = Document("Java was created by James Gosling")
 
 # Documents can be added to a list
-documents = [doc_1, doc_2, doc_3]
+documents = [rust, python, java]
 
 # Initialize the annotator
 
 quick = Quickner(documents=documents)
->>> Entities: 0 | Documents: 3 | Annotations: 
+quick
+>>> Entities: 0 | Documents: 3 | Annotations:
+>>> quick.documents
+[Document(id="87e03d58b1ba4d72", text=rust is made by Mozilla, label=[]), Document(id="f1da5d23ef88f3dc", text=Python was created by Guido van Rossum, label=[]), Document(id="e4324f9818e7e598", text=Java was created by James Gosling, label=[])]
+>>> quick.entities
+[]
 ```
 
 ### Using Documents and Entities
@@ -113,69 +117,38 @@ Entities: 6 | Documents: 3 | Annotations: PERSON: 2, PL: 3, ORG: 1
 [Document(id=87e03d58b1ba4d72, text=rust is made by Mozilla, label=[(0, 4, PL), (16, 23, ORG)]), Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, PL), (22, 38, PERSON)]), Document(id=e4324f9818e7e598, text=Java was created by James Gosling, label=[(0, 4, PL), (20, 33, PERSON)])]
 ```
 
-### Find documents by label
+### Find documents by label or entity
+
+When you have annotated your documents, you can use the `find_documents_by_label` and `find_documents_by_entity` methods to find documents by label or entity.
+
+Both methods return a list of documents, and are not case sensitive.
+
+Example:
 
 ```python
-from quickner import Quickner, Document, Entity
 
-# Create documents
-doc_1 = Document("rust is made by Mozilla")
-doc_2 = Document("Python was created by Guido van Rossum")
-doc_3 = Document("Java was created by James Gosling")
-
-# Create entities
-rust = Entity("Rust", "PL")
-mozilla = Entity("Mozilla", "ORG")
-python = Entity("Python", "PL")
-guido = Entity("Guido van Rossum", "PERSON")
-java = Entity("Java", "PL")
-james = Entity("James Gosling", "PERSON")
-
-# Documents and entities can be added to a list
-documents = [doc_1, doc_2, doc_3]
-entities = [rust, mozilla, python, guido, java, james]
-
-# Initialize the annotator
-quick = Quickner(documents=documents, entities=entities)
-quick.process()
-
->>> quick
-Entities: 6 | Documents: 3 | Annotations: PERSON: 2, PL: 3, ORG: 1
->>> quick.find_documents("PERSON")
+# Find documents by label
+>>> quick.find_documents_by_label("PERSON")
 [Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, PL), (22, 38, PERSON)]), Document(id=e4324f9818e7e598, text=Java was created by James Gosling, label=[(0, 4, PL), (20, 33, PERSON)])]
+
+# Find documents by entity
+>>> quick.find_documents_by_entity("Guido van Rossum")
+[Document(id=f1da5d23ef88f3dc, text=Python was created by Guido van Rossum, label=[(0, 6, PL), (22, 38, PERSON)])]
+>>> quick.find_documents_by_entity("rust")
+[Document(id=87e03d58b1ba4d72, text=rust is made by Mozilla, label=[(0, 4, PL), (16, 23, ORG)])]
+>>> quick.find_documents_by_entity("Chris Lattner")
+[Document(id=3b0b3b5b0b5b0b5b, text=Swift was created by Chris Lattner and Apple, label=[(0, 5, PL), (21, 35, PERSON), (40, 45, ORG)])]
 ```
 
 ### Get a Spacy Compatible Generator Object
 
+You can use the `spacy` method to get a spacy compatible generator object.
+
+The generator object can be used to feed a spacy model with the annotated data, you still need to convert the data into DocBin format.
+
+Example:
+
 ```python
-# Create documents from texts
-texts = (
-  "rust is made by Mozilla",
-  "Python was created by Guido van Rossum",
-  "Java was created by James Gosling at Sun Microsystems",
-  "Swift was created by Chris Lattner and Apple",
-)
-documents = [Document(text) for text in texts]
-
-# Create entities
-entities = (
-  ("Rust", "PL"),
-  ("Python", "PL"),
-  ("Java", "PL"),
-  ("Swift", "PL"),
-  ("Mozilla", "ORG"),
-  ("Apple", "ORG"),
-  ("Sun Microsystems", "ORG"),
-  ("Guido van Rossum", "PERSON"),
-  ("James Gosling", "PERSON"),
-  ("Chris Lattner", "PERSON"),
-)
-entities = [Entity(*(entity)) for entity in entities]
-
-# Initialize the annotator
-quick = Quickner(documents=documents, entities=entities)
-quick.process()
-
 # Get a spacy compatible generator object
 >>> quick.spacy()
 <builtins.SpacyGenerator object at 0x102311440>
@@ -190,17 +163,30 @@ quick.process()
 
 ### Single document annotation
 
+You can also annotate a single document with a list of entities.
+
+This is useful when you want to annotate a document with a list of entities is not in the list of entities of the Quickner object.
+
+Example:
+
 ```python
 from quickner import Document, Entity
 
 # Create a document from a string
+# Method 1
 rust = Document.from_string("rust is made by Mozilla")
+# Method 2
+rust = Document("rust is made by Mozilla")
+
 # Create a list of entities
 entities = [Entity("Rust", "PL"), Entity("Mozilla", "ORG")]
 # Annotate the document with the entities, case_sensitive is set to False by default
-rust.annotate(entities, case_sensitive=True)
+>>> rust.annotate(entities, case_sensitive=True)
 >>> rust
-Document(id=87e03d58b1ba4d72, text=rust is made by Mozilla, label=[(16, 23, ORG)])
+Document(id="87e03d58b1ba4d72", text=rust is made by Mozilla, label=[(16, 23, ORG)])
+>>> rust.annotate(entities, case_sensitive=False)
+>>> rust
+Document(id="87e03d58b1ba4d72", text=rust is made by Mozilla, label=[(16, 23, ORG), (0, 4, PL)])
 ```
 
 ### Load from file

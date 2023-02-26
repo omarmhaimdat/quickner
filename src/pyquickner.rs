@@ -293,11 +293,37 @@ impl PyQuickner {
     }
 
     #[pyo3(signature = (label))]
-    pub fn find_documents(&self, label: &str) -> Vec<PyDocument> {
+    pub fn find_documents_by_label(&self, label: &str) -> Vec<PyDocument> {
         let documents_index = match &self.quickner {
-            quickner => quickner.documents_index.to_owned(),
+            quickner => quickner.documents_label_index.to_owned(),
         };
         let documents_ids = match documents_index.get(label) {
+            Some(documents_ids) => documents_ids,
+            None => return vec![],
+        };
+        let documents = match &self.quickner {
+            quickner => {
+                let documents = documents_ids
+                    .into_iter()
+                    .map(|id| {
+                        let document = quickner.documents_hash.get(id).unwrap();
+                        PyDocument::from(document.to_owned())
+                    })
+                    .collect();
+                documents
+            }
+        };
+        documents
+    }
+
+    #[pyo3(signature = (name))]
+    pub fn find_documents_by_entity(&self, name: &str) -> Vec<PyDocument> {
+        let documents_entities_index = match &self.quickner {
+            quickner => quickner.documents_entities_index.to_owned(),
+        };
+        let binding = name.to_lowercase();
+        let name = binding.as_str();
+        let documents_ids = match documents_entities_index.get(name) {
             Some(documents_ids) => documents_ids,
             None => return vec![],
         };

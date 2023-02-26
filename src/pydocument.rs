@@ -3,7 +3,7 @@ use crate::{
     utils::{colorize, TermColor},
 };
 use pyo3::prelude::*;
-use quickner::{hash_string, Document, Entity};
+use quickner::{hash_string, Document};
 use serde::{Deserialize, Serialize};
 
 #[derive(Eq, PartialEq, Serialize, Deserialize, Clone, Hash, Debug)]
@@ -74,10 +74,7 @@ impl PyDocument {
     #[pyo3(signature = (entities, case_sensitive = false))]
     pub fn annotate(&mut self, entities: Vec<PyEntity>, case_sensitive: bool) {
         let mut annotation = Document::from_string(self.text.clone());
-        let entities = entities
-            .into_iter()
-            .map(|entity| Entity::from(entity))
-            .collect();
+        let entities = entities.into_iter().collect();
         annotation.annotate(entities, case_sensitive);
         self.label.extend(
             annotation

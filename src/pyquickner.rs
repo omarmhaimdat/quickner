@@ -34,17 +34,19 @@ pub struct PySpacyEntity {
     pub entity: Vec<(usize, usize, String)>,
 }
 
+pub type SpacyFormat = Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>;
+
 #[pyclass(name = "SpacyGenerator")]
 pub struct PySpacyGenerator {
     #[pyo3(get)]
-    pub entities: Vec<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>>,
+    pub entities: Vec<SpacyFormat>,
 }
 
 #[pymethods]
 impl PySpacyGenerator {
     #[new]
     #[pyo3(signature = (entities))]
-    fn new(entities: Vec<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>>) -> Self {
+    fn new(entities: Vec<SpacyFormat>) -> Self {
         PySpacyGenerator { entities }
     }
 
@@ -52,9 +54,7 @@ impl PySpacyGenerator {
         slf
     }
 
-    fn __next__(
-        mut slf: PyRefMut<'_, Self>,
-    ) -> Option<Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)>> {
+    fn __next__(mut slf: PyRefMut<'_, Self>) -> Option<SpacyFormat> {
         if slf.entities.is_empty() {
             PyGeneratorExit::new_err("No more entities");
             None
@@ -88,13 +88,13 @@ impl PyQuickner {
         let mut quickner = Quickner::new(None);
         match documents {
             Some(documents) => {
-                quickner.documents = documents.into_iter().map(|x| Document::from(x)).collect();
+                quickner.documents = documents.into_iter().collect();
             }
             None => quickner.documents = Vec::new(),
         }
         match entities {
             Some(entities) => {
-                quickner.entities = entities.into_iter().map(|x| Entity::from(x)).collect();
+                quickner.entities = entities.into_iter().collect();
             }
             None => quickner.entities = Vec::new(),
         }
@@ -108,21 +108,25 @@ impl PyQuickner {
 
     #[setter(documents)]
     pub fn documents(&mut self, documents: Vec<PyDocument>) {
-        self.documents = documents.into_iter().map(|x| x.into()).collect();
+        self.documents = documents.clone();
+        self.quickner.documents = documents.into_iter().collect();
+        self.quickner.documents_hash = Quickner::document_hash(&self.quickner.documents);
+        self.quickner.build_label_index();
+        self.quickner.build_entity_index();
     }
 
     #[setter(entities)]
     pub fn entities(&mut self, entities: Vec<PyEntity>) {
-        self.entities = entities.into_iter().map(|x| x.into()).collect();
+        self.entities = entities.clone();
+        self.quickner.entities = entities.into_iter().collect();
     }
 
     pub fn add_document(&mut self, document: PyDocument) {
         if self.documents.contains(&document) {
             return;
         }
-        match self.documents {
-            ref mut documents => documents.push(document.clone()),
-        }
+        let documents = &mut self.documents;
+        documents.push(document.clone());
         let document = Document::from(document);
         self.quickner.add_document(document);
     }
@@ -138,9 +142,8 @@ impl PyQuickner {
         if self.entities.contains(&entity) {
             return;
         }
-        match self.entities {
-            ref mut entities => entities.push(entity.clone()),
-        }
+        let entities = &mut self.entities;
+        entities.push(entity.clone());
         let entity = Entity {
             name: entity.name,
             label: entity.label,
@@ -190,14 +193,14 @@ impl PyQuickner {
             .documents
             .clone()
             .into_iter()
-            .map(|document| PyDocument::from(document))
+            .map(PyDocument::from)
             .collect::<Vec<PyDocument>>();
         self.entities = self
             .quickner
             .entities
             .clone()
             .into_iter()
-            .map(|entity| PyEntity::from(entity))
+            .map(PyEntity::from)
             .collect::<Vec<PyEntity>>();
         Ok(())
     }
@@ -294,50 +297,46 @@ impl PyQuickner {
 
     #[pyo3(signature = (label))]
     pub fn find_documents_by_label(&self, label: &str) -> Vec<PyDocument> {
-        let documents_index = match &self.quickner {
-            quickner => quickner.documents_label_index.to_owned(),
-        };
+        let quickner = &self.quickner;
+        let documents_index = quickner.documents_label_index.to_owned();
         let documents_ids = match documents_index.get(label) {
             Some(documents_ids) => documents_ids,
             None => return vec![],
         };
-        let documents = match &self.quickner {
-            quickner => {
-                let documents = documents_ids
-                    .into_iter()
-                    .map(|id| {
-                        let document = quickner.documents_hash.get(id).unwrap();
-                        PyDocument::from(document.to_owned())
-                    })
-                    .collect();
-                documents
-            }
+        let quickner = &self.quickner;
+        let documents = {
+            let documents = documents_ids
+                .iter()
+                .map(|id| {
+                    let document = quickner.documents_hash.get(id).unwrap();
+                    PyDocument::from(document.to_owned())
+                })
+                .collect();
+            documents
         };
         documents
     }
 
     #[pyo3(signature = (name))]
     pub fn find_documents_by_entity(&self, name: &str) -> Vec<PyDocument> {
-        let documents_entities_index = match &self.quickner {
-            quickner => quickner.documents_entities_index.to_owned(),
-        };
+        let quickner = &self.quickner;
+        let documents_entities_index = quickner.documents_entities_index.to_owned();
         let binding = name.to_lowercase();
         let name = binding.as_str();
         let documents_ids = match documents_entities_index.get(name) {
             Some(documents_ids) => documents_ids,
             None => return vec![],
         };
-        let documents = match &self.quickner {
-            quickner => {
-                let documents = documents_ids
-                    .into_iter()
-                    .map(|id| {
-                        let document = quickner.documents_hash.get(id).unwrap();
-                        PyDocument::from(document.to_owned())
-                    })
-                    .collect();
-                documents
-            }
+        let quickner = &self.quickner;
+        let documents = {
+            let documents = documents_ids
+                .iter()
+                .map(|id| {
+                    let document = quickner.documents_hash.get(id).unwrap();
+                    PyDocument::from(document.to_owned())
+                })
+                .collect();
+            documents
         };
         documents
     }
@@ -442,7 +441,7 @@ impl From<Quickner> for PyQuickner {
                     None => None,
                 },
             },
-            config_path: quickner.config_file,
+            config_path: quickner.config_file.unwrap_or("".to_string()),
             documents: quickner
                 .documents
                 .iter()

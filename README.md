@@ -276,6 +276,22 @@ special_characters = true        # if true, entities with special characters wil
 
 ```
 
+## Features Roadmap and TODO
+
+- [x] Add support for spaCy format
+- [x] Add support for brat format
+- [x] Add support for conll format
+- [x] Add support for jsonl format
+- [x] Add support for loading annotations from a json spaCy file
+- [x] Add support for loading annotations from a jsonl file
+- [ ] Add support for loading annotations from a brat file
+- [ ] Find documents with a specific entity/entities and return the documents
+- [ ] Substring search for entities in the text (case sensitive and insensitive)
+- [ ] Partial match for entities, e.g. "Rust" will match "Rustlang"
+- [ ] Pattern/regex based entites, e.g. "Rustlang" will match "Rustlang 1.0"
+- [ ] Fuzzy match for entities with levenstein distance, e.g. "Rustlang" will match "Rust"
+- [ ] Add support for jupyter notebook
+
 ## License
 
 [MOZILLA PUBLIC LICENSE Version 2.0](LICENSE)

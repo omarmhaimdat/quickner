@@ -19,10 +19,6 @@ impl PartialEq for Document {
     fn eq(&self, other: &Self) -> bool {
         self.id == other.id && self.text == other.text && self.label == other.label
     }
-
-    fn ne(&self, other: &Self) -> bool {
-        !self.eq(other)
-    }
 }
 
 impl Document {

@@ -24,7 +24,7 @@ pub struct Quickner {
     /// Path to the configuration file
     /// Default: ./config.toml
     pub config: Config,
-    pub config_file: String,
+    pub config_file: Option<String>,
     pub documents: Vec<Document>,
     pub entities: Vec<Entity>,
     pub documents_hash: HashMap<String, Document>,
@@ -36,7 +36,7 @@ impl Default for Quickner {
     fn default() -> Self {
         Self {
             config: Config::default(),
-            config_file: "./config.toml".to_string(),
+            config_file: Some("./config.toml".to_string()),
             documents: Vec::new(),
             entities: Vec::new(),
             documents_hash: HashMap::new(),
@@ -69,7 +69,7 @@ impl Quickner {
         entities: Vec<Entity>,
     ) -> Option<Vec<(usize, usize, String)>> {
         // let mut annotations = Vec::new();
-        let annotations = entities.iter().map(|entity| {
+        let annotations = entities.iter().filter_map(|entity| {
             let target_len = entity.name.len();
             for (start, _) in text.match_indices(entity.name.as_str()) {
                 if start == 0
@@ -89,22 +89,16 @@ impl Quickner {
                             && text.chars().nth(start + target_len).unwrap() != '.'
                             && (start > 0 && text.chars().nth(start - 1).unwrap() != '.')))
                 {
-                    return (start, start + target_len, entity.label.to_string());
+                    return Some((start, start + target_len, entity.label.to_string()));
                 }
             }
-            (0, 0, String::new())
+            None
         });
-        let annotations: Vec<(usize, usize, String)> = annotations
-            .filter(|(_, _, label)| !label.is_empty())
-            .collect();
         // Unique annotations
-        let mut annotations = annotations
-            .into_iter()
-            .collect::<HashSet<(usize, usize, String)>>()
-            .into_iter()
-            .collect::<Vec<(usize, usize, String)>>();
-        // Sort annotations by start index
+        let mut annotations = annotations.collect::<Vec<(usize, usize, String)>>();
         annotations.sort_by(|a, b| a.0.cmp(&b.0));
+        annotations.dedup();
+        // Sort annotations by start index
         if !annotations.is_empty() {
             Some(annotations)
         } else {
@@ -189,10 +183,11 @@ impl Quickner {
             return Quickner::default();
         }
         let config = Config::from_file(config_file.as_str());
-        let mut quick = Quickner::default();
-        quick.config = config;
-        quick.config_file = config_file;
-        quick
+        Quickner {
+            config,
+            config_file: Some(config_file),
+            ..Default::default()
+        }
     }
 
     pub fn add_document(&mut self, document: Document) {
@@ -275,7 +270,7 @@ impl Quickner {
         let config = self.parse_config();
         config.summary();
         info!("----------------------------------------");
-        if self.entities.len() == 0 {
+        if self.entities.is_empty() {
             let entities: HashSet<Entity> = self.entities(
                 config.entities.input.path.as_str(),
                 config.entities.filters,
@@ -283,7 +278,7 @@ impl Quickner {
             );
             self.entities = entities.into_iter().collect();
         }
-        if self.documents.len() == 0 {
+        if self.documents.is_empty() {
             let texts: HashSet<Text> = self.texts(
                 config.texts.input.path.as_str(),
                 config.texts.filters,
@@ -479,7 +474,7 @@ impl Quickner {
         let documents_hash = Quickner::document_hash(&documents);
         let mut quick = Quickner {
             config: Config::default(),
-            config_file: String::from(""),
+            config_file: None,
             documents,
             entities,
             documents_hash,
@@ -536,7 +531,7 @@ impl Quickner {
         let documents_hash = Quickner::document_hash(&documents);
         let mut quick = Quickner {
             config: Config::default(),
-            config_file: String::from(""),
+            config_file: None,
             documents,
             entities,
             documents_hash,
@@ -573,7 +568,7 @@ impl Quickner {
 }
 
 impl Quickner {
-    fn build_label_index(&mut self) {
+    pub fn build_label_index(&mut self) {
         let mut index: HashMap<String, Vec<String>> = HashMap::new();
         for document in &self.documents {
             for label in &document.label {
@@ -584,7 +579,7 @@ impl Quickner {
         self.documents_label_index = index;
     }
 
-    fn build_entity_index(&mut self) {
+    pub fn build_entity_index(&mut self) {
         let mut index: HashMap<String, Vec<String>> = HashMap::new();
         for document in &self.documents {
             for label in &document.label {
@@ -646,9 +641,9 @@ impl Quickner {
             .collect::<Vec<Entity>>()
     }
 
-    fn document_hash(documents: &Vec<Document>) -> HashMap<String, Document> {
+    pub fn document_hash(documents: &[Document]) -> HashMap<String, Document> {
         documents
-            .into_iter()
+            .iter()
             .map(|document| (document.id.clone(), document.clone()))
             .collect::<HashMap<String, Document>>()
     }

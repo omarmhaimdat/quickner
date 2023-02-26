@@ -270,8 +270,8 @@ special_characters = true        # if true, entities with special characters wil
 - [x] Add support for jsonl format
 - [x] Add support for loading annotations from a json spaCy file
 - [x] Add support for loading annotations from a jsonl file
+- [x] Find documents with a specific entity/entities and return the documents
 - [ ] Add support for loading annotations from a brat file
-- [ ] Find documents with a specific entity/entities and return the documents
 - [ ] Substring search for entities in the text (case sensitive and insensitive)
 - [ ] Partial match for entities, e.g. "Rust" will match "Rustlang"
 - [ ] Pattern/regex based entites, e.g. "Rustlang" will match "Rustlang 1.0"

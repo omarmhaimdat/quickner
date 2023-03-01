@@ -358,3 +358,16 @@ class Quickner:
             List[Document]: List of documents with the entity.
         """
         ...
+    
+    def find_documents(self, labels: List[str] = None, entities: List[str] = None) -> List[Document]:
+        """
+        Find documents with specific labels or entities.
+
+        Parameters:
+            labels (List[str]): List of labels to search.
+            entities (List[str]): List of entities to search.
+
+        Returns:
+            List[Document]: List of documents with the labels or entities.
+        """
+        ...

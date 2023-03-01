@@ -27,6 +27,9 @@ impl From<PyDocument> for Document {
     }
 }
 
+// Create a trait to filter a list of documents
+
+
 impl From<Document> for PyDocument {
     fn from(document: Document) -> Self {
         PyDocument {

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::{
     pyconfig::{
@@ -339,6 +339,51 @@ impl PyQuickner {
             documents
         };
         documents
+    }
+
+    #[pyo3(signature = (entities=None, labels=None))]
+    pub fn find_documents(
+        &self,
+        entities: Option<Vec<&str>>,
+        labels: Option<Vec<&str>>,
+    ) -> Vec<PyDocument> {
+        let quickner = &self.quickner;
+        let documents_entities_index = quickner.documents_entities_index.to_owned();
+        let documents_ids = match labels {
+            Some(entities) => {
+                let mut documents_ids = HashSet::new();
+                for entity in entities {
+                    let documents_ids_entity = match documents_entities_index.get(entity) {
+                        Some(documents_ids) => documents_ids,
+                        None => return vec![],
+                    };
+                    documents_ids.extend(documents_ids_entity);
+                }
+                documents_ids
+            }
+            None => return vec![],
+        };
+        let quickner = &self.quickner;
+        let documents = documents_ids.iter().map(|id| {
+            let document = quickner.documents_hash.get(*id).unwrap();
+            PyDocument::from(document.to_owned())
+        });
+        return documents.collect();
+        // documents
+        //     .filter_map(|document| match &entities {
+        //         Some(entities) => {
+        //             let entities = entities.to_owned();
+        //             for label in document.clone().label.iter() {
+        //                 match entities.contains(&label.2.as_str()) {
+        //                     true => Some(document.clone()),
+        //                     false => None,
+        //                 };
+        //             }
+        //             None
+        //         }
+        //         None => None,
+        //     })
+        //     .collect()
     }
 
     #[pyo3(signature = (chunks = None))]

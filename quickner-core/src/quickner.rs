@@ -73,8 +73,16 @@ impl Quickner {
             let target_len = entity.name.len();
             for (start, _) in text.match_indices(entity.name.as_str()) {
                 if start == 0
-                    || text.chars().nth(start - 1).unwrap().is_whitespace()
-                    || text.chars().nth(start - 1).unwrap().is_ascii_punctuation()
+                    || text
+                        .chars()
+                        .nth(start - 1)
+                        .unwrap_or_else(|| 'N')
+                        .is_whitespace()
+                    || text
+                        .chars()
+                        .nth(start - 1)
+                        .unwrap_or_else(|| 'N')
+                        .is_ascii_punctuation()
                     || ((start + target_len) == text.len()
                         || text
                             .chars()
@@ -133,6 +141,13 @@ impl Quickner {
                 t = t.to_lowercase();
             }
             let index = Quickner::find_index(t, self.entities.clone());
+            // let patterns = self
+            //     .entities
+            //     .iter()
+            //     .map(|entity| entity.name.as_str())
+            //     .collect::<Vec<&str>>();
+            // let aho_corasick = AhoCorasick::new(patterns);
+            // let index = Quickner::find_index_using_aho_corasick(t, aho_corasick);
             let mut index = match index {
                 Some(index) => index,
                 None => vec![],

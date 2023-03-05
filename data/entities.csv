@@ -1,0 +1,1001 @@
+name,label
+Walmart,ORG
+Exxon Mobil,ORG
+Chevron,ORG
+Berkshire Hathaway,ORG
+Apple,ORG
+General Motors,ORG
+Phillips 66,ORG
+General Electric,ORG
+Ford Motor,ORG
+CVS Health,ORG
+McKesson,ORG
+AT&T,ORG
+Valero Energy,ORG
+UnitedHealth Group,ORG
+Verizon,ORG
+AmerisourceBergen,ORG
+Fannie Mae,ORG
+Costco,ORG
+HP,ORG
+Kroger,ORG
+JP Morgan Chase,ORG
+Express Scripts Holding,ORG
+Bank of America Corp.,ORG
+IBM,ORG
+Marathon Petroleum,ORG
+Cardinal Health,ORG
+Boeing,ORG
+Citigroup,ORG
+Amazon.com,ORG
+Wells Fargo,ORG
+Microsoft,ORG
+Procter & Gamble,ORG
+Home Depot,ORG
+Archer Daniels Midland,ORG
+Walgreens,ORG
+Target,ORG
+Johnson & Johnson,ORG
+Anthem,ORG
+MetLife,ORG
+Alphabet,ORG
+State Farm Insurance Cos.,ORG
+Freddie Mac,ORG
+Comcast,ORG
+PepsiCo,ORG
+United Technologies,ORG
+AIG,ORG
+UPS,ORG
+Dow Chemical,ORG
+Aetna,ORG
+Lowe's,ORG
+ConocoPhillips,ORG
+Intel,ORG
+Energy Transfer Equity,ORG
+Caterpillar,ORG
+Prudential Financial,ORG
+Pfizer,ORG
+Walt Disney,ORG
+Humana,ORG
+Enterprise Products Partners,ORG
+Cisco Systems,ORG
+Sysco,ORG
+Ingram Micro,ORG
+Coca-Cola,ORG
+Lockheed Martin,ORG
+FedEx,ORG
+Johnson Controls,ORG
+Plains GP Holdings,ORG
+World Fuel Services,ORG
+CHS,ORG
+American Airlines Group,ORG
+Merck,ORG
+Best Buy,ORG
+Delta Air Lines,ORG
+Honeywell International,ORG
+HCA Holdings,ORG
+Goldman Sachs Group,ORG
+Tesoro,ORG
+Liberty Mutual Insurance Group,ORG
+United Continental Holdings,ORG
+New York Life Insurance,ORG
+Oracle,ORG
+Morgan Stanley,ORG
+Tyson Foods,ORG
+Safeway,ORG
+Nationwide,ORG
+Deere,ORG
+DuPont,ORG
+American Express,ORG
+Allstate,ORG
+Cigna,ORG
+Mondelez International,ORG
+TIAA-CREF,ORG
+INTL FCStone,ORG
+Massachusetts Mutual Life Insurance,ORG
+DirecTV,ORG
+Halliburton,ORG
+Twenty-First Century Fox,ORG
+3M,ORG
+Sears Holdings,ORG
+General Dynamics,ORG
+Publix Super Markets,ORG
+Philip Morris International,ORG
+TJX,ORG
+Time Warner,ORG
+Macy's,ORG
+Nike,ORG
+Tech Data,ORG
+Avnet,ORG
+Northwestern Mutual,ORG
+McDonald's,ORG
+Exelon,ORG
+Travelers Cos.,ORG
+Qualcomm,ORG
+International Paper,ORG
+Occidental Petroleum,ORG
+Duke Energy,ORG
+Rite Aid,ORG
+Gilead Sciences,ORG
+Baker Hughes,ORG
+Emerson Electric,ORG
+EMC,ORG
+USAA,ORG
+Union Pacific,ORG
+Northrop Grumman,ORG
+Alcoa,ORG
+Capital One Financial,ORG
+National Oilwell Varco,ORG
+US Foods,ORG
+Raytheon,ORG
+Time Warner Cable,ORG
+Arrow Electronics,ORG
+Aflac,ORG
+Staples,ORG
+Abbott Laboratories,ORG
+Community Health Systems,ORG
+Fluor,ORG
+Freeport-McMoRan,ORG
+U.S. Bancorp,ORG
+Nucor,ORG
+Kimberly-Clark,ORG
+Hess,ORG
+Chesapeake Energy,ORG
+Xerox,ORG
+ManpowerGroup,ORG
+Amgen,ORG
+AbbVie,ORG
+Danaher,ORG
+Whirlpool,ORG
+PBF Energy,ORG
+HollyFrontier,ORG
+Eli Lilly,ORG
+Devon Energy,ORG
+Progressive,ORG
+Cummins,ORG
+Icahn Enterprises,ORG
+AutoNation,ORG
+Kohl's,ORG
+Paccar,ORG
+Dollar General,ORG
+Hartford Financial Services Group,ORG
+Southwest Airlines,ORG
+Anadarko Petroleum,ORG
+Southern,ORG
+Supervalu,ORG
+Kraft Foods Group,ORG
+Goodyear Tire & Rubber,ORG
+EOG Resources,ORG
+CenturyLink,ORG
+Altria Group,ORG
+Tenet Healthcare,ORG
+General Mills,ORG
+eBay,ORG
+ConAgra Foods,ORG
+Lear,ORG
+TRW Automotive Holdings,ORG
+United States Steel,ORG
+Penske Automotive Group,ORG
+AES,ORG
+Colgate-Palmolive,ORG
+Global Partners,ORG
+Thermo Fisher Scientific,ORG
+PG&E Corp.,ORG
+NextEra Energy,ORG
+American Electric Power,ORG
+Baxter International,ORG
+Centene,ORG
+Starbucks,ORG
+Gap,ORG
+Bank of New York Mellon Corp.,ORG
+Micron Technology,ORG
+Jabil Circuit,ORG
+PNC Financial Services Group,ORG
+Kinder Morgan,ORG
+Office Depot,ORG
+Bristol-Myers Squibb,ORG
+NRG Energy,ORG
+Monsanto,ORG
+PPG Industries,ORG
+Genuine Parts,ORG
+Omnicom Group,ORG
+Illinois Tool Works,ORG
+Murphy USA,ORG
+Land O'Lakes,ORG
+Western Refining,ORG
+Western Digital,ORG
+FirstEnergy,ORG
+Aramark,ORG
+DISH Network,ORG
+Las Vegas Sands,ORG
+Kellogg,ORG
+Loews,ORG
+CBS,ORG
+Ecolab,ORG
+Whole Foods Market,ORG
+Chubb,ORG
+Health Net,ORG
+Waste Management,ORG
+Apache,ORG
+Textron,ORG
+Synnex,ORG
+Marriott International,ORG
+Viacom,ORG
+Lincoln National,ORG
+Nordstrom,ORG
+C.H. Robinson Worldwide,ORG
+Edison International,ORG
+Marathon Oil,ORG
+Yum Brands,ORG
+Computer Sciences,ORG
+Parker-Hannifin,ORG
+DaVita HealthCare Partners,ORG
+CarMax,ORG
+Texas Instruments,ORG
+WellCare Health Plans,ORG
+Marsh & McLennan,ORG
+Consolidated Edison,ORG
+Oneok,ORG
+Visa,ORG
+Jacobs Engineering Group,ORG
+CSX,ORG
+Entergy,ORG
+Facebook,ORG
+Dominion Resources,ORG
+Leucadia National,ORG
+"Toys ""R"" Us",ORG
+DTE Energy,ORG
+Ameriprise Financial,ORG
+VF,ORG
+Praxair,ORG
+J.C. Penney,ORG
+Automatic Data Processing,ORG
+L-3 Communications,ORG
+CDW,ORG
+Guardian Life Ins. Co. of America,ORG
+Xcel Energy,ORG
+Norfolk Southern,ORG
+PPL,ORG
+R.R. Donnelley & Sons,ORG
+Huntsman,ORG
+Bed Bath & Beyond,ORG
+Stanley Black & Decker,ORG
+L Brands,ORG
+Liberty Interactive,ORG
+Farmers Insurance Exchange,ORG
+First Data,ORG
+Sherwin-Williams,ORG
+BlackRock,ORG
+Voya Financial,ORG
+Ross Stores,ORG
+Sempra Energy,ORG
+Estee Lauder,ORG
+H.J. Heinz,ORG
+Reinsurance Group of America,ORG
+Public Service Enterprise Group,ORG
+Cameron International,ORG
+Navistar International,ORG
+CST Brands,ORG
+State Street Corp.,ORG
+Unum Group,ORG
+Hilton Worldwide Holdings,ORG
+Family Dollar Stores,ORG
+Principal Financial,ORG
+Reliance Steel & Aluminum,ORG
+Air Products & Chemicals,ORG
+Assurant,ORG
+Peter Kiewit Sons',ORG
+Henry Schein,ORG
+Cognizant Technology Solutions,ORG
+MGM Resorts International,ORG
+W.W. Grainger,ORG
+Group 1 Automotive,ORG
+BB&T Corp.,ORG
+WestRock,ORG
+Advance Auto Parts,ORG
+Ally Financial,ORG
+AGCO,ORG
+Corning,ORG
+Biogen,ORG
+NGL Energy Partners,ORG
+Stryker,ORG
+Molina Healthcare,ORG
+Precision Castparts,ORG
+Discover Financial Services,ORG
+Genworth Financial,ORG
+Eastman Chemical,ORG
+Dean Foods,ORG
+AutoZone,ORG
+MasterCard,ORG
+Owens & Minor,ORG
+Hormel Foods,ORG
+GameStop,ORG
+Autoliv,ORG
+CenterPoint Energy,ORG
+Fidelity National Financial,ORG
+Sonic Automotive,ORG
+HD Supply Holdings,ORG
+Charter Communications,ORG
+Crown Holdings,ORG
+Applied Materials,ORG
+Mosaic,ORG
+CBRE Group,ORG
+Avon Products,ORG
+Republic Services,ORG
+Universal Health Services,ORG
+Darden Restaurants,ORG
+Steel Dynamics,ORG
+SunTrust Banks,ORG
+Caesars Entertainment,ORG
+Targa Resources,ORG
+Dollar Tree,ORG
+News Corp.,ORG
+Ball,ORG
+Thrivent Financial for Lutherans,ORG
+Masco,ORG
+Franklin Resources,ORG
+Avis Budget Group,ORG
+Reynolds American,ORG
+Becton Dickinson,ORG
+Priceline Group,ORG
+Broadcom,ORG
+Tenneco,ORG
+Campbell Soup,ORG
+AECOM,ORG
+Visteon,ORG
+Delek US Holdings,ORG
+Dover,ORG
+BorgWarner,ORG
+Jarden,ORG
+UGI,ORG
+Murphy Oil,ORG
+PVH,ORG
+Core-Mark Holding,ORG
+Calpine,ORG
+D.R. Horton,ORG
+Weyerhaeuser,ORG
+KKR,ORG
+FMC Technologies,ORG
+American Family Insurance Group,ORG
+SpartanNash,ORG
+WESCO International,ORG
+Quanta Services,ORG
+Mohawk Industries,ORG
+Motorola Solutions,ORG
+Lennar,ORG
+TravelCenters of America,ORG
+Sealed Air,ORG
+Eversource Energy,ORG
+Coca-Cola Enterprises,ORG
+Celgene,ORG
+Williams,ORG
+Ashland,ORG
+Interpublic Group,ORG
+Blackstone Group,ORG
+Ralph Lauren,ORG
+Quest Diagnostics,ORG
+Hershey,ORG
+Terex,ORG
+Boston Scientific,ORG
+Newmont Mining,ORG
+Allergan,ORG
+O'Reilly Automotive,ORG
+Casey's General Stores,ORG
+CMS Energy,ORG
+Foot Locker,ORG
+W.R. Berkley,ORG
+PetSmart,ORG
+Pacific Life,ORG
+Commercial Metals,ORG
+Agilent Technologies,ORG
+Huntington Ingalls Industries,ORG
+Mutual of Omaha Insurance,ORG
+Live Nation Entertainment,ORG
+Dick's Sporting Goods,ORG
+Oshkosh,ORG
+Celanese,ORG
+Spirit AeroSystems Holdings,ORG
+United Natural Foods,ORG
+Peabody Energy,ORG
+Owens-Illinois,ORG
+Dillard's,ORG
+Level 3 Communications,ORG
+Pantry,ORG
+LKQ,ORG
+Integrys Energy Group,ORG
+Symantec,ORG
+Buckeye Partners,ORG
+Ryder System,ORG
+SanDisk,ORG
+Rockwell Automation,ORG
+Dana Holding,ORG
+Lansing Trade Group,ORG
+NCR,ORG
+Expeditors International of Washington,ORG
+Omnicare,ORG
+AK Steel Holding,ORG
+Fifth Third Bancorp,ORG
+Seaboard,ORG
+NiSource,ORG
+Cablevision Systems,ORG
+Anixter International,ORG
+EMCOR Group,ORG
+Fidelity National Information Services,ORG
+Barnes & Noble,ORG
+KBR,ORG
+Auto-Owners Insurance,ORG
+Jones Financial,ORG
+Avery Dennison,ORG
+NetApp,ORG
+iHeartMedia,ORG
+Discovery Communications,ORG
+Harley-Davidson,ORG
+Sanmina,ORG
+Trinity Industries,ORG
+J.B. Hunt Transport Services,ORG
+Charles Schwab,ORG
+Erie Insurance Group,ORG
+Dr Pepper Snapple Group,ORG
+Ameren,ORG
+Mattel,ORG
+Laboratory Corp. of America,ORG
+TEGNA,ORG
+Starwood Hotels & Resorts,ORG
+General Cable,ORG
+A-Mark Precious Metals,ORG
+Graybar Electric,ORG
+Energy Future Holdings,ORG
+HRG Group,ORG
+MRC Global,ORG
+Spectra Energy,ORG
+Asbury Automotive Group,ORG
+Packaging Corp. of America,ORG
+Windstream Holdings,ORG
+PulteGroup,ORG
+JetBlue Airways,ORG
+Newell Rubbermaid,ORG
+Con-way,ORG
+Calumet Specialty Products Partners,ORG
+Expedia,ORG
+American Financial Group,ORG
+Tractor Supply,ORG
+United Rentals,ORG
+Ingredion,ORG
+Navient,ORG
+MeadWestvaco,ORG
+AGL Resources,ORG
+St. Jude Medical,ORG
+J.M. Smucker,ORG
+Western Union,ORG
+Clorox,ORG
+Domtar,ORG
+Kelly Services,ORG
+Old Republic International,ORG
+Advanced Micro Devices,ORG
+Netflix,ORG
+Booz Allen Hamilton Holding,ORG
+Quintiles Transnational Holdings,ORG
+Wynn Resorts,ORG
+Jones Lang LaSalle,ORG
+Regions Financial,ORG
+CH2M Hill,ORG
+Western & Southern Financial Group,ORG
+Lithia Motors,ORG
+salesforce.com,ORG
+Alaska Air Group,ORG
+Host Hotels & Resorts,ORG
+Harman International Industries,ORG
+Amphenol,ORG
+Realogy Holdings,ORG
+Essendant,ORG
+Hanesbrands,ORG
+Kindred Healthcare,ORG
+ARRIS Group,ORG
+Insight Enterprises,ORG
+Alliance Data Systems,ORG
+LifePoint Health,ORG
+Pioneer Natural Resources,ORG
+Wyndham Worldwide,ORG
+Owens Corning,ORG
+Alleghany,ORG
+McGraw Hill Financial,ORG
+Big Lots,ORG
+Northern Tier Energy,ORG
+Hexion,ORG
+Markel,ORG
+Noble Energy,ORG
+Leidos Holdings,ORG
+Rockwell Collins,ORG
+Airgas,ORG
+Sprague Resources,ORG
+YRC Worldwide,ORG
+Hanover Insurance Group,ORG
+Fiserv,ORG
+Lorillard,ORG
+American Tire Distributors Holdings,ORG
+ABM Industries,ORG
+Sonoco Products,ORG
+Harris,ORG
+Telephone & Data Systems,ORG
+WEC Energy Group,ORG
+Linn Energy,ORG
+Raymond James Financial,ORG
+Berry Plastics Group,ORG
+Regency Energy Partners,ORG
+SCANA,ORG
+Cincinnati Financial,ORG
+Atmos Energy,ORG
+Pepco Holdings,ORG
+Flowserve,ORG
+Simon Property Group,ORG
+Constellation Brands,ORG
+Quad/Graphics,ORG
+Burlington Stores,ORG
+Neiman Marcus Group,ORG
+Bemis,ORG
+Coach,ORG
+Continental Resources,ORG
+Ascena Retail Group,ORG
+Zoetis,ORG
+Orbital ATK,ORG
+Frontier Communications,ORG
+Levi Strauss,ORG
+SPX,ORG
+CF Industries Holdings,ORG
+Michaels Cos.,ORG
+M&T Bank Corp.,ORG
+Rush Enterprises,ORG
+Aleris,ORG
+Nexeo Solutions Holdings,ORG
+Keurig Green Mountain,ORG
+Superior Energy Services,ORG
+Williams-Sonoma,ORG
+Robert Half International,ORG
+Nvidia,ORG
+First American Financial,ORG
+Zimmer Biomet Holdings,ORG
+MDU Resources Group,ORG
+Juniper Networks,ORG
+Arthur J. Gallagher,ORG
+Colfax,ORG
+Cliffs Natural Resources,ORG
+Yahoo,ORG
+MasTec,ORG
+Lam Research,ORG
+Axiall,ORG
+Intercontinental Exchange,ORG
+Cintas,ORG
+Coty,ORG
+CA,ORG
+Andersons,ORG
+Valspar,ORG
+Northern Trust,ORG
+Intuit,ORG
+Tutor Perini,ORG
+Polaris Industries,ORG
+Hospira,ORG
+FM Global,ORG
+NVR,ORG
+Liberty Media,ORG
+Edgewell Personal Care,ORG
+Bloomin' Brands,ORG
+Avaya,ORG
+Westlake Chemical,ORG
+Hyatt Hotels,ORG
+Mead Johnson Nutrition,ORG
+Activision Blizzard,ORG
+Protective Life,ORG
+Envision Healthcare Holdings,ORG
+Fortune Brands Home & Security,ORG
+RPM International,ORG
+VWR,ORG
+LPL Financial Holdings,ORG
+KeyCorp,ORG
+Swift Transportation,ORG
+Alpha Natural Resources,ORG
+Hasbro,ORG
+Resolute Forest Products,ORG
+Tiffany,ORG
+McCormick,ORG
+Graphic Packaging Holding,ORG
+Greif,ORG
+Allegheny Technologies,ORG
+Securian Financial Group,ORG
+B/E Aerospace,ORG
+Exelis,ORG
+Adobe Systems,ORG
+Molson Coors Brewing,ORG
+Roundy's,ORG
+CNO Financial Group,ORG
+Adams Resources & Energy,ORG
+Belk,ORG
+Chipotle Mexican Grill,ORG
+American Tower,ORG
+FMC,ORG
+Hillshire Brands,ORG
+AmTrust Financial Services,ORG
+Brunswick,ORG
+Patterson,ORG
+Southwestern Energy,ORG
+Ametek,ORG
+T. Rowe Price,ORG
+Torchmark,ORG
+Darling Ingredients,ORG
+Leggett & Platt,ORG
+Watsco,ORG
+Crestwood Equity Partners,ORG
+Xylem,ORG
+Silgan Holdings,ORG
+Toll Brothers,ORG
+Manitowoc,ORG
+Science Applications International,ORG
+Carlyle Group,ORG
+Timken,ORG
+Genesis Energy,ORG
+WPX Energy,ORG
+CareFusion,ORG
+Pitney Bowes,ORG
+Ingles Markets,ORG
+PolyOne,ORG
+Brookdale Senior Living,ORG
+CommScope Holding,ORG
+Meritor,ORG
+Joy Global,ORG
+Unified Grocers,ORG
+Triumph Group,ORG
+Magellan Health,ORG
+Sally Beauty Holdings,ORG
+Flowers Foods,ORG
+Abercrombie & Fitch,ORG
+New Jersey Resources,ORG
+Fastenal,ORG
+NII Holdings,ORG
+Consol Energy,ORG
+USG,ORG
+Brink's,ORG
+Helmerich & Payne,ORG
+Lexmark International,ORG
+American Axle & Manufacturing,ORG
+Crown Castle International,ORG
+Targa Energy,ORG
+Oceaneering International,ORG
+Cabot,ORG
+CIT Group,ORG
+Cabela's,ORG
+Forest Laboratories,ORG
+DCP Midstream Partners,ORG
+Ryerson Holding,ORG
+QEP Resources,ORG
+Thor Industries,ORG
+HSN,ORG
+Graham Holdings,ORG
+Electronic Arts,ORG
+Boise Cascade,ORG
+Hub Group,ORG
+CACI International,ORG
+Roper Technologies,ORG
+Towers Watson,ORG
+Smart & Final Stores,ORG
+Big Heart Pet Brands,ORG
+Fossil Group,ORG
+Nasdaq OMX Group,ORG
+Country Financial,ORG
+Snap-on,ORG
+Pinnacle West Capital,ORG
+EchoStar,ORG
+Systemax,ORG
+WhiteWave Foods,ORG
+CUNA Mutual Group,ORG
+Cooper Tire & Rubber,ORG
+ADT,ORG
+Cerner,ORG
+Clean Harbors,ORG
+First Solar,ORG
+Lennox International,ORG
+Enable Midstream Partners,ORG
+Hubbell,ORG
+Unisys,ORG
+Alliant Energy,ORG
+Welltower,ORG
+Moody's,ORG
+C.R. Bard,ORG
+Urban Outfitters,ORG
+Church & Dwight,ORG
+American Eagle Outfitters,ORG
+Oaktree Capital Group,ORG
+Regal Beloit,ORG
+Tailored Brands,ORG
+Cooper-Standard Holdings,ORG
+W.R. Grace,ORG
+Ulta Salon Cosmetics & Fragrance,ORG
+Hawaiian Electric Industries,ORG
+SkyWest,ORG
+Green Plains,ORG
+LVB Acquisition,ORG
+NBTY,ORG
+Carlisle,ORG
+United Refining,ORG
+Tesla Motors,ORG
+Groupon,ORG
+Landstar System,ORG
+Patterson-UTI Energy,ORG
+EP Energy,ORG
+ON Semiconductor,ORG
+Rent-A-Center,ORG
+SunGard Data Systems,ORG
+Citrix Systems,ORG
+Amkor Technology,ORG
+TD Ameritrade Holding,ORG
+Worthington Industries,ORG
+Valmont Industries,ORG
+Iron Mountain,ORG
+Puget Energy,ORG
+CME Group,ORG
+IAC/InterActiveCorp,ORG
+Par Pacific Holdings,ORG
+Taylor Morrison Home,ORG
+Chiquita Brands International,ORG
+International Flavors & Fragrances,ORG
+Whiting Petroleum,ORG
+Under Armour,ORG
+Ventas,ORG
+NuStar Energy,ORG
+Select Medical Holdings,ORG
+Diebold,ORG
+American National Insurance,ORG
+Varian Medical Systems,ORG
+Apollo Education Group,ORG
+Westinghouse Air Brake Technologies,ORG
+SunPower,ORG
+Warner Music Group,ORG
+American Water Works,ORG
+H&R Block,ORG
+Mercury General,ORG
+TECO Energy,ORG
+Service Corp. International,ORG
+Vulcan Materials,ORG
+Brown-Forman,ORG
+Regal Entertainment Group,ORG
+Tempur Sealy International,ORG
+Steelcase,ORG
+MWI Veterinary Supply,ORG
+RS Legacy,ORG
+Sprouts Farmers Market,ORG
+Sabre,ORG
+Martin Marietta Materials,ORG
+Huntington Bancshares,ORG
+Alere,ORG
+TreeHouse Foods,ORG
+Arch Coal,ORG
+KLA-Tencor,ORG
+Crane,ORG
+Iasis Healthcare,ORG
+BWX Technologies,ORG
+Dentsply Sirona,ORG
+Tribune Media,ORG
+ScanSource,ORG
+Univision Communications,ORG
+Brinker International,ORG
+Archrock,ORG
+Carter's,ORG
+Analog Devices,ORG
+Genesco,ORG
+Scotts Miracle-Gro,ORG
+Convergys,ORG
+Exide Technologies,ORG
+WABCO Holdings,ORG
+Kennametal,ORG
+Amerco,ORG
+Bon-Ton Stores,ORG
+Team Health Holdings,ORG
+Regeneron Pharmaceuticals,ORG
+OneMain Holdings,ORG
+Lincoln Electric Holdings,ORG
+Dresser-Rand Group,ORG
+West,ORG
+Benchmark Electronics,ORG
+Pall,ORG
+Old Dominion Freight Line,ORG
+MSC Industrial Direct,ORG
+Sentry Insurance Group,ORG
+Sigma-Aldrich,ORG
+WGL Holdings,ORG
+Weis Markets,ORG
+Sanderson Farms,ORG
+StanCorp Financial Group,ORG
+Hyster-Yale Materials Handling,ORG
+Wolverine World Wide,ORG
+DST Systems,ORG
+Legg Mason,ORG
+Teradata,ORG
+Aaron's,ORG
+Antero Resources,ORG
+Metaldyne Performance Group,ORG
+Range Resources,ORG
+Vornado Realty Trust,ORG
+Boyd Gaming,ORG
+Covance,ORG
+Armstrong World Industries,ORG
+Cracker Barrel Old Country Store,ORG
+Chico's FAS,ORG
+Scripps Networks Interactive,ORG
+Universal Forest Products,ORG
+Concho Resources,ORG
+ITT,ORG
+HCC Insurance Holdings,ORG
+Moog,ORG
+IMS Health Holdings,ORG
+Cinemark Holdings,ORG
+Comerica,ORG
+Equity Residential,ORG
+Ryland Group,ORG
+GNC Holdings,ORG
+ArcBest,ORG
+Vectren,ORG
+Curtiss-Wright,ORG
+Tupperware Brands,ORG
+Westar Energy,ORG
+Albemarle,ORG
+AptarGroup,ORG
+Pinnacle Foods,ORG
+Penn National Gaming,ORG
+J.Crew Group,ORG
+Vantiv,ORG
+Kansas City Southern,ORG
+Caleres,ORG
+Nu Skin Enterprises,ORG
+Great Plains Energy,ORG
+Kirby,ORG
+General Growth Properties,ORG
+Broadridge Financial Solutions,ORG
+Stericycle,ORG
+Global Payments,ORG
+Nortek,ORG
+Schnitzer Steel Industries,ORG
+Universal,ORG
+ANN,ORG
+Hologic,ORG
+Panera Bread,ORG
+AOL,ORG
+SM Energy,ORG
+Paychex,ORG
+PriceSmart,ORG
+Autodesk,ORG
+Affiliated Managers Group,ORG
+Tops Holding,ORG
+Dynegy,ORG
+DSW,ORG
+Vishay Intertechnology,ORG
+Mettler-Toledo International,ORG
+SunEdison,ORG
+Tetra Tech,ORG
+Momentive Performance Materials,ORG
+EnerSys,ORG
+Donaldson,ORG
+EQT,ORG
+Monster Beverage,ORG
+PC Connection,ORG
+Total System Services,ORG
+ServiceMaster Global Holdings,ORG
+Medical Mutual of Ohio,ORG
+Applied Industrial Technologies,ORG
+Maxim Integrated Products,ORG
+OGE Energy,ORG
+A. Schulman,ORG
+Equinix,ORG
+Mednax,ORG
+Equifax,ORG
+CalAtlantic Group,ORG
+Denbury Resources,ORG
+Cimarex Energy,ORG
+Mutual of America Life Insurance,ORG
+Guess,ORG
+Post Holdings,ORG
+HealthSouth,ORG
+Ferrellgas Partners,ORG
+KB Home,ORG
+Boston Properties,ORG
+Trimble Navigation,ORG
+Teledyne Technologies,ORG
+Acuity Brands,ORG
+Skechers U.S.A.,ORG
+Xilinx,ORG
+Plexus,ORG
+Newfield Exploration,ORG
+TransDigm Group,ORG
+Kar Auction Services,ORG
+Mueller Industries,ORG
+Zions Bancorp.,ORG
+Insperity,ORG
+XPO Logistics,ORG
+Sears Hometown & Outlet Stores,ORG
+A.O. Smith,ORG
+Alliance One International,ORG
+Take-Two Interactive Software,ORG
+hhgregg,ORG
+RPC,ORG
+NewMarket,ORG
+Beacon Roofing Supply,ORG
+Edwards Lifesciences,ORG
+Triple-S Management,ORG
+Hawaiian Holdings,ORG
+Heartland Payment Systems,ORG
+Belden,ORG
+Magellan Midstream Partners,ORG
+Outerwall,ORG
+KapStone Paper & Packaging,ORG
+Alliance Holdings,ORG
+Skyworks Solutions,ORG
+Ciena,ORG
+Granite Construction,ORG
+Education Management,ORG
+Party City Holdings,ORG
+HCP,ORG
+Parexel International,ORG
+Delta Tucker Holdings,ORG
+Pinnacle Entertainment,ORG
+Stifel Financial,ORG
+Pool,ORG
+Olin,ORG
+Knights of Columbus,ORG
+PerkinElmer,ORG
+Alexion Pharmaceuticals,ORG
+IHS,ORG
+Oil States International,ORG
+HNI,ORG
+LinkedIn,ORG
+Diplomat Pharmacy,ORG
+Brocade Communications Systems,ORG
+Greenbrier Cos.,ORG
+AMC Networks,ORG
+Kemper,ORG
+Ocwen Financial,ORG
+Public Storage,ORG
+TriNet Group,ORG
+Chemtura,ORG
+Symetra Financial,ORG
+Tower International,ORG
+Meritage Homes,ORG
+MarkWest Energy Partners,ORG
+Bio-Rad Laboratories,ORG
+TrueBlue,ORG
+Cabot Oil & Gas,ORG
+Carpenter Technology,ORG
+Toro,ORG
+American Equity Investment Life Holding,ORG
+Express,ORG
+Eastman Kodak,ORG
+Hain Celestial Group,ORG
+Nationstar Mortgage Holdings,ORG
+IDEX,ORG
+Popular,ORG
+Werner Enterprises,ORG
+Esterline Technologies,ORG
+Intuitive Surgical,ORG
+Allison Transmission Holdings,ORG
+SemGroup,ORG
+Southwest Gas,ORG
+G-III Apparel Group,ORG
+National Fuel Gas,ORG
+H.B. Fuller,ORG
+Penn Mutual Life Insurance,ORG
+RCS Capital,ORG
+Columbia Sportswear,ORG
+Amica Mutual Insurance,ORG
+Primoris Services,ORG
+Energen,ORG
+Rexnord,ORG
+Seventy Seven Energy,ORG
+Waste Connections,ORG
+"Pep Boys-Manny, Moe & Jack",ORG
+Harsco,ORG
+Hovnanian Enterprises,ORG
+Willbros Group,ORG
+Wendy's,ORG
+International Game Technology,ORG
+Synopsys,ORG
+Universal American,ORG
+AAR,ORG
+Selective Insurance Group,ORG
+Gartner,ORG
+E*Trade Financial,ORG

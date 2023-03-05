@@ -76,7 +76,7 @@ docs/_build/
 .python-version
 
 # data files
-*.csv
+# *.csv
 *.json
 *.xlsx
 *.xml

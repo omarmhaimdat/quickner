@@ -2,8 +2,9 @@ use crate::{
     config::{Config, Filters},
     models::Text,
     utils::get_progress_bar,
-    SpacyEntity,
+    Entities, SpacyEntity,
 };
+use aho_corasick::AhoCorasick;
 use log::{error, info, warn};
 use rayon::prelude::*;
 use std::{collections::HashMap, path::Path};
@@ -114,6 +115,57 @@ impl Quickner {
         }
     }
 
+    pub(crate) fn find_index_using_aho_corasick(
+        text: String,
+        aho_corasick: AhoCorasick,
+        entites: Vec<Entity>,
+    ) -> Option<Vec<(usize, usize, String)>> {
+        let mut annotations = Vec::new();
+        for mat in aho_corasick.find_iter(&text) {
+            let start = mat.start();
+            let end = mat.end();
+            let label = entites[mat.pattern()].label.to_string();
+            let name = entites[mat.pattern()].name.to_string();
+            let target_len = name.len();
+            if start == 0
+                || text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_whitespace()
+                || text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_ascii_punctuation()
+                || ((start + target_len) == text.len()
+                    || text
+                        .chars()
+                        .nth(start + target_len)
+                        .unwrap_or('N')
+                        .is_whitespace()
+                    || (text
+                        .chars()
+                        .nth(start + target_len)
+                        .unwrap_or('N')
+                        .is_ascii_punctuation()
+                        && text.chars().nth(start + target_len).unwrap() != '.'
+                        && (start > 0 && text.chars().nth(start - 1).unwrap() != '.')))
+            {
+                annotations.push((start, end, label));
+            }
+        }
+        // Unique annotations
+        annotations.sort_by(|a, b| a.0.cmp(&b.0));
+        annotations.dedup();
+        // Sort annotations by start index
+        if !annotations.is_empty() {
+            Some(annotations)
+        } else {
+            None
+        }
+    }
+
     /// Annotate the texts with the entities
     /// # Example
     /// ```
@@ -140,7 +192,17 @@ impl Quickner {
             if !self.config.texts.filters.case_sensitive {
                 t = t.to_lowercase();
             }
-            let index = Quickner::find_index(t, self.entities.clone());
+            // ahocorasick implementation
+            let patterns = self
+                .entities
+                .iter()
+                .map(|entity| entity.name.as_str())
+                .collect::<Vec<&str>>();
+            let aho_corasick = AhoCorasick::new(patterns);
+            let index =
+                Quickner::find_index_using_aho_corasick(t, aho_corasick, self.entities.clone());
+            // match_index implementation
+            // let index = Quickner::find_index(t, self.entities.clone());
             // let patterns = self
             //     .entities
             //     .iter()

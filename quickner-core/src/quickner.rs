@@ -2,12 +2,12 @@ use crate::{
     config::{Config, Filters},
     models::Text,
     utils::get_progress_bar,
-    Entities, SpacyEntity,
+    SpacyEntity,
 };
 use aho_corasick::AhoCorasick;
 use log::{error, info, warn};
 use rayon::prelude::*;
-use std::{collections::HashMap, path::Path};
+use std::{collections::HashMap, path::Path, sync::Arc};
 use std::{
     collections::HashSet,
     fs::File,
@@ -117,7 +117,7 @@ impl Quickner {
 
     pub(crate) fn find_index_using_aho_corasick(
         text: String,
-        aho_corasick: AhoCorasick,
+        aho_corasick: Arc<AhoCorasick>,
         entites: Vec<Entity>,
     ) -> Option<Vec<(usize, usize, String)>> {
         let mut annotations = Vec::new();
@@ -127,30 +127,37 @@ impl Quickner {
             let label = entites[mat.pattern()].label.to_string();
             let name = entites[mat.pattern()].name.to_string();
             let target_len = name.len();
-            if start == 0
-                || text
-                    .chars()
-                    .nth(start - 1)
-                    .unwrap_or_else(|| 'N')
-                    .is_whitespace()
-                || text
-                    .chars()
-                    .nth(start - 1)
-                    .unwrap_or_else(|| 'N')
-                    .is_ascii_punctuation()
-                || ((start + target_len) == text.len()
-                    || text
-                        .chars()
-                        .nth(start + target_len)
-                        .unwrap_or('N')
-                        .is_whitespace()
-                    || (text
-                        .chars()
-                        .nth(start + target_len)
-                        .unwrap_or('N')
-                        .is_ascii_punctuation()
-                        && text.chars().nth(start + target_len).unwrap() != '.'
-                        && (start > 0 && text.chars().nth(start - 1).unwrap() != '.')))
+            let mut chars = text.chars();
+            if start == 0 {
+                annotations.push((start, end, label));
+                continue;
+            }
+            if chars.nth(start - 1).unwrap_or_else(|| 'N').is_whitespace() {
+                annotations.push((start, end, label));
+                continue;
+            }
+            if chars
+                .nth(start - 1)
+                .unwrap_or_else(|| 'N')
+                .is_ascii_punctuation()
+            {
+                annotations.push((start, end, label));
+                continue;
+            }
+            if (start + target_len) == text.len() {
+                annotations.push((start, end, label));
+                continue;
+            }
+            if chars.nth(start + target_len).unwrap_or('N').is_whitespace() {
+                annotations.push((start, end, label));
+                continue;
+            }
+            if chars
+                .nth(start + target_len)
+                .unwrap_or('N')
+                .is_ascii_punctuation()
+                && text.chars().nth(start + target_len).unwrap() != '.'
+                && (start > 0 && text.chars().nth(start - 1).unwrap() != '.')
             {
                 annotations.push((start, end, label));
             }
@@ -187,29 +194,23 @@ impl Quickner {
     pub fn annotate(&mut self) {
         let pb = get_progress_bar(self.documents.len() as u64);
         pb.set_message("Annotating texts");
+        let patterns = self
+            .entities
+            .iter()
+            .map(|entity| entity.name.as_str())
+            .collect::<Vec<&str>>();
+        let aho_corasick = Arc::new(AhoCorasick::new(patterns));
         self.documents.par_iter_mut().for_each(|document| {
             let mut t = document.text.clone();
             if !self.config.texts.filters.case_sensitive {
                 t = t.to_lowercase();
             }
             // ahocorasick implementation
-            let patterns = self
-                .entities
-                .iter()
-                .map(|entity| entity.name.as_str())
-                .collect::<Vec<&str>>();
-            let aho_corasick = AhoCorasick::new(patterns);
-            let index =
-                Quickner::find_index_using_aho_corasick(t, aho_corasick, self.entities.clone());
-            // match_index implementation
-            // let index = Quickner::find_index(t, self.entities.clone());
-            // let patterns = self
-            //     .entities
-            //     .iter()
-            //     .map(|entity| entity.name.as_str())
-            //     .collect::<Vec<&str>>();
-            // let aho_corasick = AhoCorasick::new(patterns);
-            // let index = Quickner::find_index_using_aho_corasick(t, aho_corasick);
+            let index = Quickner::find_index_using_aho_corasick(
+                t,
+                aho_corasick.clone(),
+                self.entities.clone(),
+            );
             let mut index = match index {
                 Some(index) => index,
                 None => vec![],
@@ -397,6 +398,17 @@ impl Quickner {
         info!("{} entities found", self.entities.len());
         self.annotate();
         info!("{} annotations found", self.documents.len());
+        let len_entities = self.entities.len();
+        let len_documents = self.documents.len();
+        let number_of_checks = len_entities * len_documents;
+        // Transform number of checks to a human readable string
+        let number_of_checks = match number_of_checks {
+            0..=1000 => format!("{}", number_of_checks),
+            1001..=1000000 => format!("{:.2}K", number_of_checks as f64 / 1000.0),
+            1000001..=1000000000 => format!("{:.2}M", number_of_checks as f64 / 1000000.0),
+            _ => format!("{:.2}B", number_of_checks as f64 / 1000000000.0),
+        };
+        info!("Number of unique checks: {}", number_of_checks);
         // annotations.save(&config.annotations.output.path);
         if save {
             let save = config

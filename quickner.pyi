@@ -309,18 +309,6 @@ class Quickner:
         """
         ...
 
-    def add_string(self, string: str) -> None:
-        """
-        Add a string to the list of documents.
-
-        Parameters:
-            string (str): String to add.
-
-        Returns:
-            None
-        """
-        ...
-
     def add_entity(self, entity: Entity) -> None:
         """
         Add an entity to the list of entities. If the entity already exists, it will be ignored.

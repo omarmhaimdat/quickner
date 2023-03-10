@@ -131,12 +131,6 @@ impl PyQuickner {
         self.quickner.add_document(document);
     }
 
-    pub fn add_string(&mut self, text: &str) {
-        let document = Document::from_string(text.to_string());
-        self.quickner.add_document(document.clone());
-        self.add_document(PyDocument::from(document));
-    }
-
     pub fn add_entity(&mut self, entity: PyEntity) {
         // Check if the entity is already in the list
         if self.entities.contains(&entity) {

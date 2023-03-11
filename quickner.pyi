@@ -309,18 +309,6 @@ class Quickner:
         """
         ...
 
-    def add_string(self, string: str) -> None:
-        """
-        Add a string to the list of documents.
-
-        Parameters:
-            string (str): String to add.
-
-        Returns:
-            None
-        """
-        ...
-
     def add_entity(self, entity: Entity) -> None:
         """
         Add an entity to the list of entities. If the entity already exists, it will be ignored.
@@ -356,5 +344,14 @@ class Quickner:
 
         Returns:
             List[Document]: List of documents with the entity.
+        """
+        ...
+
+    def numpy(self) -> NDArray:
+        """
+        Convert the list of documents to a Numpy array.
+
+        Returns:
+            NDArray: Numpy array of documents.
         """
         ...

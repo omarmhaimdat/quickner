@@ -1,4 +1,5 @@
 use pyo3::prelude::*;
+use pyquickner::QuicknerError;
 mod pyconfig;
 mod pydocument;
 mod pyentity;
@@ -32,5 +33,6 @@ fn quickner(_py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<pyconfig::PyFormat>()?;
     m.add_class::<pydocument::PyDocument>()?;
     m.add_class::<pyentity::PyEntity>()?;
+    m.add("QuicknerError", _py.get_type::<QuicknerError>())?;
     Ok(())
 }

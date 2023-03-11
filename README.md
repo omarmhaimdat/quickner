@@ -6,7 +6,7 @@
   </p>
   <p>
     <a href="https://badge.fury.io/py/quickner"><img src="https://badge.fury.io/py/quickner.svg" alt="PyPI version" height="18"></a>
-    <a href="https://pypi.org/project/quickner/"><img src="https://img.shields.io/pypi/l" alt="License" height="18"></a>
+    <a href="https://pypi.org/project/quickner/"><img src="https://img.shields.io/badge/License-Mozilla%20Public%20License%20Version%202.0-orange" alt="License" height="18"></a>
     <a href="https://pypi.org/project/quickner/"><img src="https://img.shields.io/pypi/dm/quickner" alt="PyPI - Downloads" height="18"></a>
     <a href="https://actions-badge.atrox.dev/omarmhaimdat/quickner/goto?ref=master"><img src="https://img.shields.io/endpoint.svg?url=https%3A%2F%2Factions-badge.atrox.dev%2Fomarmhaimdat%2Fquickner%2Fbadge%3Fref%3Dmaster&style=flat" alt="Build Status" height="18"></a>
   </p>

@@ -123,7 +123,10 @@ impl Quickner {
         let mut annotations = Vec::new();
         for mat in aho_corasick.find_iter(&text) {
             let start = mat.start();
+            // convert byte index to char index (assuming utf8)
+            let start = text[..start].chars().count();
             let end = mat.end();
+            let end = text[..end].chars().count();
             let label = entites[mat.pattern()].label.to_string();
             let name = entites[mat.pattern()].name.to_string();
             let target_len = name.len();

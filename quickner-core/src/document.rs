@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use aho_corasick::AhoCorasick;
 use serde::{Deserialize, Serialize};
 use utils::hash_string;
 
@@ -66,8 +69,16 @@ impl Document {
                 .iter_mut()
                 .for_each(|e| e.name = e.name.to_lowercase());
         }
-
-        let label = Quickner::find_index(self.text.clone(), entities);
+        let patterns = entities
+            .iter()
+            .map(|entity| entity.name.as_str())
+            .collect::<Vec<&str>>();
+        let aho_corasick = Arc::new(AhoCorasick::new(patterns));
+        let label = Quickner::find_index_using_aho_corasick(
+            self.text.clone(),
+            aho_corasick.clone(),
+            entities,
+        );
         match label {
             Some(label) => self.label.extend(label),
             None => self.label.extend(Vec::new()),

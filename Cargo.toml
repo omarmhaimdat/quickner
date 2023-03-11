@@ -21,3 +21,4 @@ crate-type = ["cdylib"]
 pyo3 = { version = "0.18.1", features = ["extension-module"] }
 quickner-core = { path = "quickner-core" }
 serde = { version = "1.0.130", features = ["derive"] }
+numpy = "0.18"

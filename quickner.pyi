@@ -346,3 +346,12 @@ class Quickner:
             List[Document]: List of documents with the entity.
         """
         ...
+
+    def numpy(self) -> NDArray:
+        """
+        Convert the list of documents to a Numpy array.
+
+        Returns:
+            NDArray: Numpy array of documents.
+        """
+        ...

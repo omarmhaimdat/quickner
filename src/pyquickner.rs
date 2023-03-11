@@ -9,11 +9,16 @@ use crate::{
     pyentity::PyEntity,
     utils::{colorize, TermColor},
 };
+use numpy::PyArray2;
+use pyo3::create_exception;
 use pyo3::{
     exceptions::{self, PyGeneratorExit},
     prelude::*,
+    types::{PyDict, PyTuple},
 };
 use quickner::{Document, Entity, Quickner, SpacyEntity};
+
+create_exception!(quickner, QuicknerError, exceptions::PyException);
 
 #[pyclass(name = "Quickner")]
 pub struct PyQuickner {
@@ -353,6 +358,74 @@ impl PyQuickner {
             })
             .collect();
         PySpacyGenerator { entities: spacy }
+    }
+
+    /// Convert Vec<Document> to numpy array of (string, array of (int, int, string))
+    /// where the first int is the start index and the second int is the end index
+    /// of the entity in the string.
+    /// The string is the text of the document.
+    /// The array of (int, int, string) is the list of entities in the document.
+    /// Return a numpy array like so: array(['rust is made by Mozilla', list([(0, 4, 'PL'), (16, 23, 'ORG')])], dtype=object)
+    /// And type is numpy.ndarray
+    // pub fn numpy(&self) -> Py<PyArray1<PyObject>> {
+    //     Python::with_gil(|py| {
+    //         let numpy = PyModule::import(py, "numpy").unwrap();
+    //         let array = numpy.getattr("array").unwrap();
+    //         let array = array.call1((self.documents.clone(),)).unwrap();
+    //         array.extract().unwrap()
+    //     })
+    // }
+
+    pub fn numpy(&self) -> PyResult<Py<PyArray2<PyObject>>> {
+        Python::with_gil(|py| {
+            let numpy = PyModule::import(py, "numpy").unwrap();
+            let array = numpy.getattr("array").unwrap();
+            let object: Vec<&PyTuple> = self
+                .documents
+                .iter()
+                .map(|document| {
+                    let entities: Vec<&PyTuple> = document
+                        .label
+                        .iter()
+                        .map(|entity| {
+                            PyTuple::new(
+                                py,
+                                &[
+                                    entity.0.to_object(py),
+                                    entity.1.to_object(py),
+                                    entity.2.clone().to_object(py),
+                                ],
+                            )
+                        })
+                        .collect();
+                    PyTuple::new(
+                        py,
+                        &[
+                            document.id.clone().to_object(py),
+                            document.text.clone().to_object(py),
+                            entities.to_object(py),
+                        ],
+                    )
+                })
+                .collect::<Vec<&PyTuple>>();
+            let args = PyDict::new(py);
+            args.set_item("dtype", "object").unwrap();
+            let array = array.call((object,), Some(args));
+            if let Ok(array) = array {
+                let array = array.extract::<Py<PyArray2<PyObject>>>();
+                match array {
+                    Ok(array) => Ok(array),
+                    Err(array) => {
+                        // Raise an exception QuicknerError
+                        Err(PyErr::new::<QuicknerError, _>(array.to_string()))
+                    }
+                }
+            } else {
+                let array = array.unwrap_err();
+                // Raise an exception QuicknerError
+                Err(PyErr::new::<QuicknerError, _>(array.to_string()))
+            }
+        })
     }
 }
 

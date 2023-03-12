@@ -25,6 +25,8 @@ def main():
     quick = Quickner(documents=documents, entities=entities)
     quick.process()
     end = time.perf_counter()
+    quick.to_jsonl("data/output.jsonl")
+    print(quick.find_documents_by_entity("Apple"))
     print(f"Time elapsed: {end - start} seconds")
 
 

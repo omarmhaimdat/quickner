@@ -1,7 +1,7 @@
 use crate::{
     config::{Config, Filters},
     models::Text,
-    utils::get_progress_bar,
+    utils::{char_to_byte, get_progress_bar, is_valid_utf8},
     SpacyEntity,
 };
 use aho_corasick::AhoCorasick;
@@ -120,6 +120,10 @@ impl Quickner {
         aho_corasick: Arc<AhoCorasick>,
         entites: Vec<Entity>,
     ) -> Option<Vec<(usize, usize, String)>> {
+        if !is_valid_utf8(text.as_str()) {
+            warn!("Skipping invalid utf8 text: \"{}\"", text);
+            return None;
+        }
         let mut annotations = Vec::new();
         for mat in aho_corasick.find_iter(&text) {
             let start = mat.start();
@@ -551,8 +555,8 @@ impl Quickner {
                 texts.push(text);
                 // Extract the entity name from the label
                 for label in &annotation.label {
-                    // Extarct the entity name using indexes
-                    let name = annotation.text[label.0..label.1].to_string();
+                    let indices = char_to_byte(annotation.text.clone(), label.0, label.1);
+                    let name = annotation.text[indices.0..indices.1].to_string();
                     let entity = Entity {
                         name: name.to_string().to_lowercase(),
                         label: label.2.to_string(),
@@ -675,7 +679,9 @@ impl Quickner {
         let mut index: HashMap<String, Vec<String>> = HashMap::new();
         for document in &self.documents {
             for label in &document.label {
-                let name = document.text[label.0..label.1].to_string();
+                // Translate the indices to byte indices
+                let indices = char_to_byte(document.text.clone(), label.0, label.1);
+                let name = document.text[indices.0..indices.1].to_string();
                 let entry = index.entry(name.to_lowercase()).or_insert(Vec::new());
                 entry.push(document.id.clone());
             }
@@ -695,7 +701,8 @@ impl Quickner {
 
     fn add_to_entity_index(&mut self, document: &Document) {
         for label in &document.label {
-            let name = document.text[label.0..label.1].to_string();
+            let indices = char_to_byte(document.text.clone(), label.0, label.1);
+            let name = document.text[indices.0..indices.1].to_string();
             let entry = self
                 .documents_entities_index
                 .entry(name.to_lowercase())
@@ -716,7 +723,8 @@ impl Quickner {
 
     fn _remove_from_entity_index(&mut self, document: &Document) {
         for label in &document.label {
-            let name = document.text[label.0..label.1].to_string();
+            let indices = char_to_byte(document.text.clone(), label.0, label.1);
+            let name = document.text[indices.0..indices.1].to_string();
             let entry = self
                 .documents_entities_index
                 .entry(name.to_lowercase())

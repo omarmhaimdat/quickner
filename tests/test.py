@@ -167,12 +167,11 @@ class TestQuickner(unittest.TestCase):
     def test_character_level_slicing(self):
         entity = Entity("Python", "PL")
         document = Document("Indizes auf Zeichenebene anstelle von Indizes auf Byteebene, um Python-Slicing zu unterstützen")
-        document = Document.from_string("Ich möchte die Anzahl der Bytes größer als Zeichen machen rust")
         document.annotate([entity], case_sensitive=False)
         print(document.label[0][0], document.label[0][1])
         label = document.text[document.label[0][0]:document.label[0][1]]
         self.assertEqual(len(document.label), 1)
-        self.assertEqual(label, "rust")
+        self.assertEqual(label, "Python")
 
 
 if __name__ == "__main__":

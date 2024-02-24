@@ -56,7 +56,7 @@ class TestQuickner(unittest.TestCase):
         quick.process()
         # Check if all entities are labeled correctly
         labels_count = sum(len(document.label) for document in quick.documents)
-        self.assertEqual(labels_count, 11)
+        self.assertEqual(labels_count, 12)
         self._test_correct(quick.documents)
 
     def test_quickner_from_documents_and_entities(self):
@@ -67,7 +67,7 @@ class TestQuickner(unittest.TestCase):
         self.assertEqual(len(quick.entities), 10)
         quick.process()
         labels_count = sum(len(document.label) for document in quick.documents)
-        self.assertEqual(labels_count, 11)
+        self.assertEqual(labels_count, 12)
         self._test_correct(quick.documents)
 
     def test_find_document_by_label(self):
@@ -116,8 +116,8 @@ class TestQuickner(unittest.TestCase):
 
     def test_find_document_by_entity(self):
         entities = [Entity(*(entity)) for entity in self.entities]
-        documents = [Document(text) for text in self.texts]
-        quick = Quickner(documents=documents, entities=entities)
+        all_documents = [Document(text) for text in self.texts]
+        quick = Quickner(documents=all_documents, entities=entities)
         quick.process()
         documents = quick.find_documents_by_entity("Rust")
         self.assertEqual(len(documents), 2)

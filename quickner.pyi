@@ -1,9 +1,8 @@
 from ast import Dict
-from typing import Iterator, Optional, List, Tuple, NewType
+from typing import Iterator, Optional, List, Tuple, NewType, overload
 from enum import Enum
 
 Label = NewType("Label", List[Tuple[int, int, str]])
-
 
 def from_jsonl(path: str) -> Quickner:
     """
@@ -65,13 +64,13 @@ class Document:
         text (str): Text of the annotation.
         label (Label): Label of the annotation.
     """
+
     label: Label
-    id : int
+    id: int
     text: str
 
     def __init__(self, text: str, label: Optional[Label]) -> None: ...
     def __repr__(self) -> str: ...
-    
     @staticmethod
     def from_string(text: str) -> Document: ...
     def annotate(self, entities: List[Entity], case_sensitive: bool = False) -> None:
@@ -87,6 +86,14 @@ class Document:
         """
         ...
 
+    def pretty(self) -> str:
+        """
+        Pretty print the document.
+
+        Returns:
+            str: Pretty print of the document.
+        """
+        ...
 
 class Input:
     """
@@ -96,6 +103,7 @@ class Input:
         path (str): Path to the input file.
         filter (bool): Use filters. Default is False.
     """
+
     path: str
     filter: bool
 
@@ -115,6 +123,7 @@ class Filters:
         list_of_special_characters (List[str]): List of special characters to accept.
         Default is a list of special characters.
     """
+
     alphanumeric: bool
     case_sensitive: bool
     min_length: int
@@ -133,6 +142,7 @@ class Texts:
         input (Input): Input configuration.
         filters (Filters): Filters configuration.
     """
+
     input: Input
     filters: Filters
 
@@ -143,12 +153,14 @@ class Output:
     Attributes:
         path (str): Path to the output file.
     """
+
     path: str
 
 class Format(Enum):
     """
     Format of the output file.
     """
+
     CONLL = "conll"
     JSON = "json"
     SPACY = "spacy"
@@ -164,6 +176,7 @@ class AnnotationsConfig:
         format (Format): Format of the output file. Default is "jsonl".
         Possible values are "conll", "json", "spacy", "brat", "jsonl".
     """
+
     output: Output
     format: Format
 
@@ -174,6 +187,7 @@ class Excludes:
     Attributes:
         path (str): Path to the file containing the entities to exclude.
     """
+
     path: str
 
 class Entities:
@@ -185,6 +199,7 @@ class Entities:
         excludes (Excludes): Excludes configuration.
         filters (Filters): Filters configuration.
     """
+
     input: Input
     excludes: Excludes
     filters: Filters
@@ -197,6 +212,7 @@ class Logging:
         level (str): Logging level. Default is "info".
         Possible values are "debug", "info", "warning", "error", "critical".
     """
+
     level: str
 
 class Config:
@@ -209,6 +225,7 @@ class Config:
         entities (Entities): Entities configuration.
         logging (Logging): Logging configuration.
     """
+
     texts: Texts
     annotations: AnnotationsConfig
     entities: Entities
@@ -224,7 +241,7 @@ class Quickner:
         documents (List[Document]): List of documents.
         entities (List[Entity]): List of entities.
         config (Config): Configuration object.
-    
+
     Attributes:
         documents (List[Document]): List of documents.
         entities (List[Entity]): List of entities.
@@ -234,22 +251,30 @@ class Quickner:
         process(save: bool = False): Process texts and entities to generate annotations.
         save_annotations(path: str = None, format: Format = Format.JSONL): Save annotations to a file.
     """
+
     config_file: str
     config: Config
     documents: List[Document]
     entities: List[Entity]
 
+    @overload
     def __init__(self) -> None: ...
+    @overload
     def __init__(self, documents: List[Document]) -> None: ...
+    @overload
     def __init__(self, entities: List[Entity]) -> None: ...
+    @overload
     def __init__(self, documents: List[Document], entities: List[Entity]) -> None: ...
-    def __init__(self, documents: List[Document], entities: List[Entity], config: Config) -> None: ...
+    @overload
+    def __init__(
+        self, documents: List[Document], entities: List[Entity], config: Config
+    ) -> None: ...
+    @overload
     def __init__(self, documents: List[Document], config: Config) -> None: ...
-    
     def process(self, save: Optional[bool] = False) -> None: ...
-    
-    def save_annotations(self, path: Optional[str] = None, format: Optional[Format] = Format.JSONL) -> None: ...
-    
+    def save_annotations(
+        self, path: Optional[str] = None, format: Optional[Format] = Format.JSONL
+    ) -> None: ...
     def to_jsonl(self, path: Optional[str] = None) -> None:
         """
         Save annotations to a JSONL file.
@@ -272,7 +297,7 @@ class Quickner:
             None
         """
         ...
-    
+
     def to_spacy(self, path: Optional[str] = None) -> None:
         """
         Save annotations to a Spacy file.
@@ -285,7 +310,9 @@ class Quickner:
         """
         ...
 
-    def spacy(self, chunks: Optional[int] = None) -> Iterator[List[Dict["entity", List[Tuple[int, int, str]]]]]:
+    def spacy(
+        self, chunks: Optional[int] = None
+    ) -> Iterator[List[Dict["Entity", List[Tuple[int, int, str]]]]]:
         """
         Generate Spacy documents.
 
@@ -320,7 +347,7 @@ class Quickner:
             None
         """
         ...
-    
+
     def find_documents_by_label(self, label: str) -> List[Document]:
         """
         Find documents with a specific label.
@@ -332,7 +359,7 @@ class Quickner:
             List[Document]: List of documents with the label.
         """
         ...
-    
+
     def find_documents_by_entity(self, name: str) -> List[Document]:
         """
         Find documents with a specific entity.
@@ -347,7 +374,7 @@ class Quickner:
         """
         ...
 
-    def numpy(self) -> NDArray:
+    def numpy(self) -> NDArray:  # noqa: F821
         """
         Convert the list of documents to a Numpy array.
 

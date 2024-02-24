@@ -147,11 +147,20 @@ impl PyDocument {
         let mut sorted_label: Vec<(usize, usize, String)> = self.label.clone();
         sorted_label.sort_by(|a, b| a.0.cmp(&b.0));
         for (start_label, end_label, label) in sorted_label {
-            let color = color_map.get(&label).unwrap();
-            pretty.push_str(&self.text[start..start_label]);
-            pretty.push_str(&colorize(&self.text[start_label..end_label], *color));
-            pretty.push_str(&format!("[{label}]"));
-            start = end_label;
+            let color = color_map.get(&label);
+            if let Some(color) = color {
+                // Handle case of this string: 'ne comprend absolument rien � twitter '
+                // because of the � character
+                if start_label > self.text.len() || end_label > self.text.len() {
+                    return Err(pyo3::exceptions::PyValueError::new_err(
+                        "start_label is greater than the length of the text",
+                    ));
+                }
+                pretty.push_str(&self.text[start..start_label]);
+                pretty.push_str(&colorize(&self.text[start_label..end_label], *color));
+                pretty.push_str(&format!("[{label}]"));
+                start = end_label;
+            }
         }
         pretty.push_str(&self.text[start..]);
         Ok(pretty)

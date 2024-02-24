@@ -36,7 +36,7 @@ impl Format {
     /// Returns an error if the file cannot be written
     /// # Panics
     /// Panics if the format is not supported
-    pub fn save(&self, annotations: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    pub fn save(&self, annotations: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         match self {
             Format::Spacy => Format::spacy(annotations, path),
             Format::Jsonl => Format::jsonl(annotations, path),
@@ -54,7 +54,7 @@ impl Format {
         path
     }
 
-    fn spacy(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    fn spacy(documents: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such [["text", {"entity": [[0, 4, "ORG"], [5, 10, "ORG"]]}]]
 
         // Transform Vec<(String, HashMap<String, Vec<(usize, usize, String)>>)> into Structure
@@ -65,9 +65,9 @@ impl Format {
             .into_iter()
             .map(|annotation| {
                 (
-                    annotation.text,
+                    (*annotation.text).to_string(),
                     SpacyEntity {
-                        entity: annotation.label,
+                        entity: (*annotation.label).to_vec(),
                     },
                 )
             })
@@ -77,7 +77,7 @@ impl Format {
         Ok(path)
     }
 
-    fn jsonl(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    fn jsonl(documents: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such {"text": "text", "label": [[0, 4, "ORG"], [5, 10, "ORG"]]}
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.jsonl"))?;
@@ -89,7 +89,7 @@ impl Format {
         Ok(path)
     }
 
-    fn csv(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    fn csv(documents: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save as such "text", "label"
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.csv"))?;
@@ -101,16 +101,16 @@ impl Format {
         Ok(path)
     }
 
-    fn brat(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    fn brat(documents: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // Save .ann and .txt files
         let path = Format::remove_extension_from_path(path);
         let mut file_ann = std::fs::File::create(format!("{path}.ann"))?;
         let mut file_txt = std::fs::File::create(format!("{path}.txt"))?;
         for document in documents {
-            let text = document.text;
+            let text = &document.text;
             file_txt.write_all(text.as_bytes())?;
             file_txt.write_all(b"\n")?;
-            for (id, (start, end, label)) in document.label.into_iter().enumerate() {
+            for (id, (start, end, label)) in (*document.label).to_vec().into_iter().enumerate() {
                 let entity = text[start..end].to_string();
                 let line = format!("T{id}\t{label}\t{start}\t{end}\t{entity}");
                 file_ann.write_all(line.as_bytes())?;
@@ -120,20 +120,20 @@ impl Format {
         Ok(path)
     }
 
-    fn conll(documents: Vec<Document>, path: &str) -> Result<String, std::io::Error> {
+    fn conll(documents: &Vec<Document>, path: &str) -> Result<String, std::io::Error> {
         // for reference: https://simpletransformers.ai/docs/ner-data-formats/
         let path = Format::remove_extension_from_path(path);
         let mut file = std::fs::File::create(format!("{path}.txt"))?;
         let annotations_tranformed: Vec<Vec<(String, String)>> = documents
             .into_iter()
             .map(|annotation| {
-                let text = annotation.text;
+                let text = &annotation.text;
                 // Split text into words
                 let words: Vec<&str> = text.split_whitespace().collect();
                 // If the word is not associated with an entity, then it is an "O"
                 let mut labels: Vec<String> = vec!["O".to_string(); words.len()];
                 // For each entity, find the word that contains it and assign the label to it
-                for (start, end, label) in annotation.label {
+                for (start, end, label) in (*annotation.label).to_vec() {
                     let entity = text[start..end].to_string();
                     // Find the index of the word that contains the entity
                     let index = words.iter().position(|&word| word.contains(&entity));

@@ -116,11 +116,11 @@ impl Quickner {
     }
 
     pub(crate) fn find_index_using_aho_corasick(
-        text: String,
-        aho_corasick: Arc<AhoCorasick>,
-        entites: Vec<Entity>,
+        text: &str,
+        aho_corasick: &Arc<AhoCorasick>,
+        entites: &Vec<Entity>,
     ) -> Option<Vec<(usize, usize, String)>> {
-        if !is_valid_utf8(text.as_str()) {
+        if !is_valid_utf8(text) {
             warn!("Skipping invalid utf8 text: \"{}\"", text);
             return None;
         }
@@ -134,19 +134,45 @@ impl Quickner {
             let label = entites[mat.pattern()].label.to_string();
             let name = entites[mat.pattern()].name.to_string();
             let target_len = name.len();
-            let mut chars = text.chars();
-            if start == 0 {
+            if start == 0
+                && (text.chars().nth(end).unwrap_or('N').is_whitespace()
+                    || (text.chars().nth(end).unwrap_or('N').is_ascii_punctuation()))
+            {
                 annotations.push((start, end, label));
                 continue;
             }
-            if chars.nth(start - 1).unwrap_or_else(|| 'N').is_whitespace() {
+            // if text == "python was created by guido van rossum" {
+            //     println!("Start: {}, End: {}, text_len: {}, End + 1: {}", start, end, text.len(), text.chars().nth(end + 1).unwrap_or('N'));
+            // }
+            // println!("Start: {}, End: {}, text_len: {}", start, end, char_len);
+            if start > 0
+                && text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_whitespace()
+                && (text.chars().nth(end).unwrap_or_else(|| 'N').is_whitespace()
+                    || text
+                        .chars()
+                        .nth(end)
+                        .unwrap_or_else(|| 'N')
+                        .is_ascii_punctuation())
+            {
                 annotations.push((start, end, label));
                 continue;
             }
-            if chars
-                .nth(start - 1)
-                .unwrap_or_else(|| 'N')
-                .is_ascii_punctuation()
+            if start > 0
+                && text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_ascii_punctuation()
+                && (text.chars().nth(end).unwrap_or_else(|| 'N').is_whitespace()
+                    || text
+                        .chars()
+                        .nth(end)
+                        .unwrap_or_else(|| 'N')
+                        .is_ascii_punctuation())
             {
                 annotations.push((start, end, label));
                 continue;
@@ -155,14 +181,40 @@ impl Quickner {
                 annotations.push((start, end, label));
                 continue;
             }
-            if chars.nth(start + target_len).unwrap_or('N').is_whitespace() {
+            if (text
+                .chars()
+                .nth(start - 1)
+                .unwrap_or_else(|| 'N')
+                .is_ascii_punctuation()
+                || text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_whitespace())
+                && text
+                    .chars()
+                    .nth(start + target_len)
+                    .unwrap_or('N')
+                    .is_whitespace()
+            {
                 annotations.push((start, end, label));
                 continue;
             }
-            if chars
-                .nth(start + target_len)
-                .unwrap_or('N')
+            if (text
+                .chars()
+                .nth(start - 1)
+                .unwrap_or_else(|| 'N')
                 .is_ascii_punctuation()
+                || text
+                    .chars()
+                    .nth(start - 1)
+                    .unwrap_or_else(|| 'N')
+                    .is_whitespace())
+                && text
+                    .chars()
+                    .nth(start + target_len)
+                    .unwrap_or('N')
+                    .is_ascii_punctuation()
                 && text.chars().nth(start + target_len).unwrap() != '.'
                 && (start > 0 && text.chars().nth(start - 1).unwrap() != '.')
             {
@@ -206,18 +258,18 @@ impl Quickner {
             .iter()
             .map(|entity| entity.name.as_str())
             .collect::<Vec<&str>>();
+        // Check if apple is in the patterns
+        // if patterns.contains(&"apple") {
+        //     println!("Apple found in patterns");
+        // }
         let aho_corasick = Arc::new(AhoCorasick::new(patterns));
         self.documents.par_iter_mut().for_each(|document| {
-            let mut t = document.text.clone();
+            let t: &mut String = &mut document.text;
             if !self.config.texts.filters.case_sensitive {
-                t = t.to_lowercase();
-            }
+                *t = t.to_lowercase();
+            };
             // ahocorasick implementation
-            let index = Quickner::find_index_using_aho_corasick(
-                t,
-                aho_corasick.clone(),
-                self.entities.clone(),
-            );
+            let index = Quickner::find_index_using_aho_corasick(&t, &aho_corasick, &self.entities);
             let mut index = match index {
                 Some(index) => index,
                 None => vec![],
@@ -283,18 +335,18 @@ impl Quickner {
                 return;
             }
         }
-        self.documents.push(document.clone());
+        self.documents.push(document.to_owned());
         self.documents_hash
-            .insert(document.id.clone(), document.clone());
+            .insert(document.id.to_owned(), document.to_owned());
         self.add_to_entity_index(&document);
         self.add_to_label_index(&document);
     }
 
     pub fn add_document_from_string(&mut self, text: &str) {
         let document = Document::from_string(text.to_string());
-        self.documents.push(document.clone());
+        self.documents.push(document.to_owned());
         self.documents_hash
-            .insert(document.id.clone(), document.clone());
+            .insert(document.id.to_owned(), document.to_owned());
         self.add_to_entity_index(&document);
         self.add_to_label_index(&document);
     }
@@ -371,7 +423,7 @@ impl Quickner {
             );
             self.documents = texts
                 .par_iter()
-                .map(|text| Document::new(text.text.clone(), vec![]))
+                .map(|text| Document::new((*text.text).to_string(), vec![]))
                 .collect();
         }
         let excludes: HashSet<String> = match config.entities.excludes.path {
@@ -398,7 +450,7 @@ impl Quickner {
                 .iter()
                 .map(|entity| Entity {
                     name: entity.name.to_lowercase(),
-                    label: entity.label.clone(),
+                    label: entity.label.to_string(),
                 })
                 .collect();
         }
@@ -421,7 +473,7 @@ impl Quickner {
             let save = config
                 .annotations
                 .format
-                .save(self.documents.clone(), &config.annotations.output.path);
+                .save(&self.documents, &config.annotations.output.path);
             match save {
                 Ok(_) => info!(
                     "Annotations saved with format {:?}",
@@ -550,12 +602,12 @@ impl Quickner {
                 let line = line.unwrap();
                 let annotation: Document = serde_json::from_str(line.as_str()).unwrap();
                 let text = Text {
-                    text: annotation.clone().text,
+                    text: (*annotation.text).to_string(),
                 };
                 texts.push(text);
                 // Extract the entity name from the label
                 for label in &annotation.label {
-                    let indices = char_to_byte(annotation.text.clone(), label.0, label.1);
+                    let indices = char_to_byte((*annotation.text).to_string(), label.0, label.1);
                     let name = annotation.text[indices.0..indices.1].to_string();
                     let entity = Entity {
                         name: name.to_string().to_lowercase(),
@@ -608,7 +660,7 @@ impl Quickner {
             .into_iter()
             .map(|doc| {
                 let text = Text {
-                    text: doc.0.clone(),
+                    text: (*doc.0).to_string(),
                 };
                 texts.push(text);
                 // Extract the entity name from the label
@@ -644,9 +696,9 @@ impl Quickner {
         for document in &self.documents {
             let mut entity: Vec<(usize, usize, String)> = Vec::new();
             for label in &document.label {
-                entity.push((label.0, label.1, label.2.clone()));
+                entity.push((label.0, label.1, (*label.2).to_string()));
             }
-            spacy.push((document.text.clone(), SpacyEntity { entity }));
+            spacy.push(((*document.text).to_string(), SpacyEntity { entity }));
         }
         let chunks = match chunks {
             Some(chunks) => chunks,
@@ -668,8 +720,8 @@ impl Quickner {
         let mut index: HashMap<String, Vec<String>> = HashMap::new();
         for document in &self.documents {
             for label in &document.label {
-                let entry = index.entry(label.2.clone()).or_insert(Vec::new());
-                entry.push(document.id.clone());
+                let entry = index.entry((*label.2).to_string()).or_insert(Vec::new());
+                entry.push((*document.id).to_string());
             }
         }
         self.documents_label_index = index;
@@ -680,10 +732,10 @@ impl Quickner {
         for document in &self.documents {
             for label in &document.label {
                 // Translate the indices to byte indices
-                let indices = char_to_byte(document.text.clone(), label.0, label.1);
+                let indices = char_to_byte((*document.text).to_string(), label.0, label.1);
                 let name = document.text[indices.0..indices.1].to_string();
                 let entry = index.entry(name.to_lowercase()).or_insert(Vec::new());
-                entry.push(document.id.clone());
+                entry.push((*document.id).to_string());
             }
         }
         self.documents_entities_index = index;
@@ -693,21 +745,21 @@ impl Quickner {
         for label in &document.label {
             let entry = self
                 .documents_label_index
-                .entry(label.2.clone())
+                .entry((*label.2).to_string())
                 .or_insert(Vec::new());
-            entry.push(document.id.clone());
+            entry.push((*document.id).to_string());
         }
     }
 
     fn add_to_entity_index(&mut self, document: &Document) {
         for label in &document.label {
-            let indices = char_to_byte(document.text.clone(), label.0, label.1);
+            let indices = char_to_byte((*document.text).to_string(), label.0, label.1);
             let name = document.text[indices.0..indices.1].to_string();
             let entry = self
                 .documents_entities_index
                 .entry(name.to_lowercase())
                 .or_insert(Vec::new());
-            entry.push(document.id.clone());
+            entry.push((*document.id).to_string());
         }
     }
 
@@ -715,7 +767,7 @@ impl Quickner {
         for label in &document.label {
             let entry = self
                 .documents_label_index
-                .entry(label.2.clone())
+                .entry((*label.2).to_string())
                 .or_insert(Vec::new());
             entry.retain(|x| x != &document.id);
         }

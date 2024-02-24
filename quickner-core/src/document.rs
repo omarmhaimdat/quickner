@@ -74,11 +74,7 @@ impl Document {
             .map(|entity| entity.name.as_str())
             .collect::<Vec<&str>>();
         let aho_corasick = Arc::new(AhoCorasick::new(patterns));
-        let label = Quickner::find_index_using_aho_corasick(
-            self.text.clone(),
-            aho_corasick.clone(),
-            entities,
-        );
+        let label = Quickner::find_index_using_aho_corasick(&self.text, &aho_corasick, &entities);
         match label {
             Some(label) => self.label.extend(label),
             None => self.label.extend(Vec::new()),
@@ -92,8 +88,8 @@ impl Document {
     fn set_unique_labels(&mut self) {
         let mut labels: Vec<(usize, usize, String)> = Vec::new();
         for (start, end, label) in &self.label {
-            if !labels.contains(&(*start, *end, label.clone())) {
-                labels.push((*start, *end, label.clone()));
+            if !labels.contains(&(*start, *end, label.to_string())) {
+                labels.push((*start, *end, label.to_string()));
             }
         }
         self.label = labels;

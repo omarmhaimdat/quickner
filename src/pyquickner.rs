@@ -113,7 +113,7 @@ impl PyQuickner {
 
     #[setter(documents)]
     pub fn documents(&mut self, documents: Vec<PyDocument>) {
-        self.documents = documents.clone();
+        self.documents = (*documents).to_vec();
         self.quickner.documents = documents.into_iter().collect();
         self.quickner.documents_hash = Quickner::document_hash(&self.quickner.documents);
         self.quickner.build_label_index();
@@ -122,7 +122,7 @@ impl PyQuickner {
 
     #[setter(entities)]
     pub fn entities(&mut self, entities: Vec<PyEntity>) {
-        self.entities = entities.clone();
+        self.entities = (*entities).to_vec();
         self.quickner.entities = entities.into_iter().collect();
     }
 
@@ -217,7 +217,7 @@ impl PyQuickner {
             PyFormat::BRAT => quickner::Format::Brat,
             PyFormat::CONLL => quickner::Format::Conll,
         };
-        let save_annotations = format.save(self.quickner.documents.clone(), &path);
+        let save_annotations = format.save(&self.quickner.documents, &path);
         match save_annotations {
             Ok(_) => Ok(save_annotations.unwrap()),
             Err(error) => Err(PyErr::new::<exceptions::PyException, _>(error.to_string())),
@@ -255,10 +255,10 @@ impl PyQuickner {
         let documents: Vec<Document> = self
             .documents
             .iter()
-            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .map(|annotation| Document::new((*annotation.text).to_string(), (*annotation.label).to_vec()))
             .collect();
         quickner::Format::Jsonl
-            .save(documents, path.as_str())
+            .save(&documents, path.as_str())
             .unwrap();
     }
 
@@ -271,10 +271,10 @@ impl PyQuickner {
         let documents: Vec<Document> = self
             .documents
             .iter()
-            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .map(|annotation| Document::new((*annotation.text).to_string(), (*annotation.label).to_vec()))
             .collect();
         quickner::Format::Csv
-            .save(documents, path.as_str())
+            .save(&documents, path.as_str())
             .unwrap();
     }
 
@@ -287,10 +287,10 @@ impl PyQuickner {
         let documents: Vec<Document> = self
             .documents
             .iter()
-            .map(|annotation| Document::new(annotation.text.clone(), annotation.label.clone()))
+            .map(|annotation| Document::new((*annotation.text).to_string(), (*annotation.label).to_vec()))
             .collect();
         quickner::Format::Spacy
-            .save(documents, path.as_str())
+            .save(&documents, path.as_str())
             .unwrap();
     }
 
@@ -304,7 +304,7 @@ impl PyQuickner {
         };
         let quickner = &self.quickner;
         let documents = {
-            let documents = documents_ids
+            let documents: Vec<_> = documents_ids
                 .iter()
                 .map(|id| {
                     let document = quickner.documents_hash.get(id).unwrap();
@@ -313,6 +313,16 @@ impl PyQuickner {
                 .collect();
             documents
         };
+        // Remove duplicates
+        let documents = documents
+            .into_iter()
+            .fold(Vec::new(), |mut acc, document| {
+                if !acc.contains(&document) {
+                    acc.push(document);
+                }
+                acc
+            });
+        println!("{:?}", documents);
         documents
     }
 
@@ -328,7 +338,7 @@ impl PyQuickner {
         };
         let quickner = &self.quickner;
         let documents = {
-            let documents = documents_ids
+            let documents: Vec<_> = documents_ids
                 .iter()
                 .map(|id| {
                     let document = quickner.documents_hash.get(id).unwrap();
@@ -337,6 +347,15 @@ impl PyQuickner {
                 .collect();
             documents
         };
+        // Remove duplicates
+        let documents: Vec<_> = documents
+            .into_iter()
+            .fold(Vec::new(), |mut acc, document| {
+                if !acc.contains(&document) {
+                    acc.push(document);
+                }
+                acc
+            });
         documents
     }
 

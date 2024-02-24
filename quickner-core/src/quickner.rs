@@ -125,7 +125,7 @@ impl Quickner {
             return None;
         }
         let mut annotations = Vec::new();
-        for mat in aho_corasick.find_iter(&text) {
+        for mat in aho_corasick.find_overlapping_iter(&text) {
             let start = mat.start();
             // convert byte index to char index (assuming utf8)
             let start = text[..start].chars().count();
@@ -141,7 +141,7 @@ impl Quickner {
                 annotations.push((start, end, label));
                 continue;
             }
-            // if text == "python was created by guido van rossum" {
+            // if text == "monty python and the holy grail: the ultimate quiz http://bit.ly/pd3ms i got 42/50. can't believe i missed the name of lancelot's page " {
             //     println!("Start: {}, End: {}, text_len: {}, End + 1: {}", start, end, text.len(), text.chars().nth(end + 1).unwrap_or('N'));
             // }
             // println!("Start: {}, End: {}, text_len: {}", start, end, char_len);

@@ -26,7 +26,8 @@ def main():
     quick.process()
     end = time.perf_counter()
     quick.to_jsonl("data/output.jsonl")
-    # docs = quick.find_documents_by_entity("twitter")
+    print(quick)
+    docs = quick.find_documents_by_entity("Twitter")
     print(f"Time elapsed: {end - start} seconds")
 
 
